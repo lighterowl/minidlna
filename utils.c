@@ -45,6 +45,13 @@ strcatf(struct string_s *str, const char *fmt, ...)
 	return ret;
 }
 
+inline void
+strncpyt(char *dst, const char *src, size_t len)
+{
+	strncpy(dst, src, len);
+	dst[len-1] = '\0';
+}
+
 int
 ends_with(const char * haystack, const char * needle)
 {
@@ -62,16 +69,32 @@ ends_with(const char * haystack, const char * needle)
 char *
 trim(char *str)
 {
-        if (!str)
-                return(NULL);
-        int i;
-        for (i=0; i <= strlen(str) && (isspace(str[i]) || str[i] == '"'); i++) {
+	int i;
+	int len;
+
+	if (!str)
+		return(NULL);
+
+	len = strlen(str);
+	for (i=len-1; i >= 0 && isspace(str[i]); i--)
+	{
+		str[i] = '\0';
+		len--;
+	}
+	while (isspace(*str))
+	{
+		str++;
+		len--;
+	}
+
+	if (str[0] == '"' && str[len-1] == '"')
+	{
+		str[0] = '\0';
+		str[len-1] = '\0';
 		str++;
 	}
-        for (i=(strlen(str)-1); i >= 0 && (isspace(str[i]) || str[i] == '"'); i--) {
-                str[i] = '\0';
-        }
-        return str;
+
+	return str;
 }
 
 /* Find the first occurrence of p in s, where s is terminated by t */

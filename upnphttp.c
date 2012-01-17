@@ -284,6 +284,7 @@ intervening space) by either an integer or the keyword "infinite". */
 			}
 			else if(strncasecmp(line, "User-Agent", 10)==0)
 			{
+				char *s;
 				/* Skip client detection if we already detected it. */
 				if( h->req_client )
 					goto next_header;
@@ -302,13 +303,13 @@ intervening space) by either an integer or the keyword "infinite". */
 					h->reqflags |= FLAG_DLNA;
 					h->reqflags |= FLAG_MIME_AVI_DIVX;
 				}
-				else if(strstrc(p, "SEC_HHP_", '\r'))
+				else if((s=strstrc(p, "SEC_HHP_", '\r')))
 				{
 					h->req_client = ESamsungSeriesC;
 					h->reqflags |= FLAG_SAMSUNG;
 					h->reqflags |= FLAG_DLNA;
 					h->reqflags |= FLAG_NO_RESIZE;
-					if(strstrc(p, "SEC_HHP_TV", '\r'))
+					if(strstrc(s+8, "TV", '\r'))
 						h->reqflags |= FLAG_SAMSUNG_TV;
 				}
 				else if(strncmp(p, "SamsungWiselinkPro", 18)==0)
@@ -773,6 +774,18 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 	HttpVer[i] = '\0';
 	/*DPRINTF(E_INFO, L_HTTP, "HTTP REQUEST : %s %s (%s)\n",
 	       HttpCommand, HttpUrl, HttpVer);*/
+
+	/* set the interface here initially, in case there is no Host header */
+	for(i = 0; i<n_lan_addr; i++)
+	{
+		if( (h->clientaddr.s_addr & lan_addr[i].mask.s_addr)
+		   == (lan_addr[i].addr.s_addr & lan_addr[i].mask.s_addr))
+		{
+			h->iface = i;
+			break;
+		}
+	}
+
 	ParseHttpHeaders(h);
 
 	/* see if we need to wait for remaining data */
@@ -818,7 +831,7 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 			Send400(h);
 			return;
 		}
-		#if 1 /* 7.3.33.4 */
+		/* 7.3.33.4 */
 		else if( ((h->reqflags & FLAG_TIMESEEK) || (h->reqflags & FLAG_PLAYSPEED)) &&
 		         !(h->reqflags & FLAG_RANGE) )
 		{
@@ -827,7 +840,6 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 			Send406(h);
 			return;
 		}
-		#endif
 		else if(strcmp("GET", HttpCommand) == 0)
 		{
 			h->req_command = EGet;
