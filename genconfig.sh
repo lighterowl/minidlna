@@ -1,5 +1,4 @@
 #! /bin/sh
-# $Id$
 # MiniDLNA project
 # http://sourceforge.net/projects/minidlna/
 #
