@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <libgen.h>
+#include <limits.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -84,12 +85,36 @@ insert_playlist(const char * path, char * name)
 	return 0;
 }
 
+static unsigned int
+gen_dir_hash(const char *path)
+{
+	char dir[PATH_MAX], *base;
+	int len;
+
+	strncpy(dir, path, sizeof(dir));
+	dir[sizeof(dir)-1] = '\0';
+	base = strrchr(dir, '/');
+	if( !base )
+		base = strrchr(dir, '\\');
+	if( base )
+	{
+		*base = '\0';
+		len = base - dir;
+	}
+	else
+		return 0;
+	
+
+	return DJBHash(dir, len);
+}
+
 int
 fill_playlists()
 {
 	int rows, i, found, len;
 	char **result;
 	char *plpath, *plname, *fname, *last_dir;
+	unsigned int hash, last_hash = 0;
 	char class[] = "playlistContainer";
 	struct song_metadata plist;
 	struct stat file;
@@ -114,6 +139,7 @@ fill_playlists()
 		plname = result[++i];
 		plpath = result[++i];
 		last_dir = NULL;
+		last_hash = 0;
 
 		strncpy(type, strrchr(plpath, '.')+1, 4);
 
@@ -136,6 +162,7 @@ fill_playlists()
 		found = 0;
 		while( next_plist_track(&plist, &file, NULL, type) == 0 )
 		{
+			hash = gen_dir_hash(plist.path);
 			if( sql_get_int_field(db, "SELECT 1 from OBJECTS where OBJECT_ID = '%s$%llX$%d'",
 			                      MUSIC_PLIST_ID, plID, plist.track) == 1 )
 			{
@@ -146,8 +173,13 @@ fill_playlists()
 			}
 			if( last_dir )
 			{
-				fname = basename(plist.path);
-				detailID = sql_get_int_field(db, "SELECT ID from DETAILS where PATH = '%q/%q'", last_dir, fname);
+				if( hash == last_hash )
+				{
+					fname = basename(plist.path);
+					detailID = sql_get_int_field(db, "SELECT ID from DETAILS where PATH = '%q/%q'", last_dir, fname);
+				}
+				else
+					detailID = -1;
 				if( detailID <= 0 )
 				{
 					sqlite3_free(last_dir);
@@ -195,6 +227,7 @@ found:
 					fname = strrchr(last_dir, '/');
 					if( fname )
 						*fname = '\0';
+					last_hash = hash;
 				}
 				found++;
 			}
