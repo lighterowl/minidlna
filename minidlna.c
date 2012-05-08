@@ -748,15 +748,17 @@ init(int argc, char * * argv)
 	/* If no IP was specified, try to detect one */
 	if( n_lan_addr < 1 )
 	{
-		if( (getsysaddr(ip_addr, sizeof(ip_addr)) < 0) &&
-		    (getifaddr("eth0", ip_addr, sizeof(ip_addr)) < 0) &&
-		    (getifaddr("eth1", ip_addr, sizeof(ip_addr)) < 0) )
+		if( getsysaddrs() > 0 )
 		{
-			DPRINTF(E_OFF, L_GENERAL, "No IP address automatically detected!\n");
+			for( i = 0; i < n_lan_addr; i++ )
+			{
+				DPRINTF(E_OFF, L_GENERAL, "Enabled interface %s/%s\n",
+				        lan_addr[i].str, inet_ntoa(lan_addr[i].mask));
+			}
 		}
-		if( *ip_addr && parselanaddr(&lan_addr[n_lan_addr], ip_addr) == 0 )
+		else
 		{
-			n_lan_addr++;
+			DPRINTF(E_FATAL, L_GENERAL, "No IP address automatically detected!\n");
 		}
 	}
 
