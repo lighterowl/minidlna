@@ -748,15 +748,7 @@ init(int argc, char * * argv)
 	/* If no IP was specified, try to detect one */
 	if( n_lan_addr < 1 )
 	{
-		if( getsysaddrs() > 0 )
-		{
-			for( i = 0; i < n_lan_addr; i++ )
-			{
-				DPRINTF(E_OFF, L_GENERAL, "Enabled interface %s/%s\n",
-				        lan_addr[i].str, inet_ntoa(lan_addr[i].mask));
-			}
-		}
-		else
+		if( getsysaddrs() <= 0 )
 		{
 			DPRINTF(E_FATAL, L_GENERAL, "No IP address automatically detected!\n");
 		}
@@ -972,6 +964,12 @@ main(int argc, char * * argv)
 	    GETFLAG(INOTIFY_MASK) && pthread_create(&inotify_thread, NULL, start_inotify, NULL) )
 	{
 		DPRINTF(E_FATAL, L_GENERAL, "ERROR: pthread_create() failed for start_inotify.\n");
+	}
+
+	for( i = 0; i < n_lan_addr; i++ )
+	{
+		DPRINTF(E_INFO, L_GENERAL, "Enabled interface %s/%s\n",
+		        lan_addr[i].str, inet_ntoa(lan_addr[i].mask));
 	}
 
 	sudp = OpenAndConfSSDPReceiveSocket(n_lan_addr, lan_addr);
