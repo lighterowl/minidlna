@@ -345,6 +345,7 @@ ParseHttpHeaders(struct upnphttp * h)
 				else if(strstrc(p, "fbxupnpav/", '\r'))
 				{
 					h->req_client = EFreeBox;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
 				}
 				else if(strncmp(p, "SMP8634", 7)==0)
 				{
@@ -365,6 +366,12 @@ ParseHttpHeaders(struct upnphttp * h)
 				{
 					h->req_client = ENetgearEVA2000;
 					h->reqflags |= FLAG_MS_PFS;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
+				}
+				else if(strstrc(p, "DIRECTV ", '\r'))
+				{
+					h->req_client = EDirecTV;
+					h->reqflags |= FLAG_RESIZE_THUMBS;
 				}
 				else if(strstrc(p, "UPnP/1.0 DLNADOC/1.50 Intel_SDK_for_UPnP_devices/1.2", '\r'))
 				{
