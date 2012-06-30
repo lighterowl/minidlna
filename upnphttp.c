@@ -1617,9 +1617,9 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	time_t curtime = time(NULL);
 	int width=640, height=480, dstw, dsth, size;
 	int srcw, srch;
-	unsigned char * data = NULL;
-	char *path, *file_path;
-	char *resolution;
+	unsigned char *data = NULL;
+	char *path, *file_path = NULL;
+	char *resolution = NULL;
 	char *key, *val;
 	char *saveptr, *item=NULL;
 	int rotate;
@@ -1633,16 +1633,18 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	id = strtoll(object, &saveptr, 10);
 	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", id);
 	ret = sql_get_table(db, buf, &result, &rows, NULL);
-	if( (ret != SQLITE_OK) )
+	if( ret != SQLITE_OK )
 	{
-		DPRINTF(E_ERROR, L_HTTP, "Didn't find valid file for %lld!\n", id);
 		Send500(h);
 		return;
 	}
-	file_path = result[3];
-	resolution = result[4];
-	rotate = result[5] ? atoi(result[5]) : 0;
-	if( !rows || !file_path || !resolution || (access(file_path, F_OK) != 0) )
+	if( rows )
+	{
+		file_path = result[3];
+		resolution = result[4];
+		rotate = result[5] ? atoi(result[5]) : 0;
+	}
+	if( !file_path || !resolution || (access(file_path, F_OK) != 0) )
 	{
 		DPRINTF(E_WARN, L_HTTP, "%s not found, responding ERROR 404\n", object);
 		sqlite3_free_table(result);
@@ -1872,9 +1874,8 @@ SendResp_dlnafile(struct upnphttp * h, char * object)
 	{
 		snprintf(buf, sizeof(buf), "SELECT PATH, MIME, DLNA_PN from DETAILS where ID = '%lld'", id);
 		ret = sql_get_table(db, buf, &result, &rows, NULL);
-		if( (ret != SQLITE_OK) )
+		if( ret != SQLITE_OK )
 		{
-			DPRINTF(E_ERROR, L_HTTP, "Didn't find valid file for %lld!\n", id);
 			Send500(h);
 			return;
 		}
