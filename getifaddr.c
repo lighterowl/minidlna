@@ -60,13 +60,14 @@ getifaddr(const char * ifname, char * buf, int len)
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if(s < 0)
 	{
-		DPRINTF(E_ERROR, L_GENERAL, "socket(PF_INET, SOCK_DGRAM): %s\n", strerror(errno));
+		DPRINTF(E_ERROR, L_GENERAL, "socket: %s\n", strerror(errno));
 		return -1;
 	}
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
 	if(ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
 	{
-		DPRINTF(E_ERROR, L_GENERAL, "ioctl(s, SIOCGIFADDR, ...): %s\n", strerror(errno));
+		/* Interface is up but has no address (unconfigured) */
+		DPRINTF(E_INFO, L_GENERAL, "SIOCGIFADDR %s: %s\n", ifname, strerror(errno));
 		close(s);
 		return -1;
 	}
