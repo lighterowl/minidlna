@@ -12,10 +12,7 @@
 #
 #CFLAGS = -Wall -O -D_GNU_SOURCE -g -DDEBUG
 #CFLAGS = -Wall -g -Os -D_GNU_SOURCE
-CFLAGS = -Wall -g -O3 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 \
-	 -I/usr/include/ffmpeg \
-	 -I/usr/include/libavutil -I/usr/include/libavcodec -I/usr/include/libavformat \
-	 -I/usr/include/ffmpeg/libavutil -I/usr/include/ffmpeg/libavcodec -I/usr/include/ffmpeg/libavformat
+CFLAGS = -Wall -g -O3 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 #STATIC_LINKING: CFLAGS += -DSTATIC
 #STATIC_LINKING: LDFLAGS = -static
 CC = gcc
@@ -129,7 +126,5 @@ log.o: log.h
 
 .c.o:
 	@echo Compiling $*.c
-	@$(CC) $(CFLAGS) -o $@ -c $< && exit 0;\
-		echo "The following command failed:" 1>&2;\
-		echo "$(CC) $(CFLAGS) -o $@ -c $<";\
-		$(CC) $(CFLAGS) -o $@ -c $< &>/dev/null
+	@$(CC) $(CFLAGS) -o $@ -c $< && exit 0; \
+		echo "The following command failed:  $(CC) $(CFLAGS) -o $@ -c $<" && false

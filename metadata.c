@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with MiniDLNA. If not, see <http://www.gnu.org/licenses/>.
  */
+#include "config.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -30,9 +31,7 @@
 #include "image_utils.h"
 #include <jpeglib.h>
 #include <setjmp.h>
-#include <avutil.h>
-#include <avcodec.h>
-#include <avformat.h>
+#include "libav.h"
 #include "tagutils/tagutils.h"
 
 #include "upnpglobalvars.h"
