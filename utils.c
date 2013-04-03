@@ -35,12 +35,17 @@ inline int
 strcatf(struct string_s *str, const char *fmt, ...)
 {
 	int ret;
+	size_t size;
 	va_list ap;
 
+	if (str->off >= str->size)
+		return 0;
+
 	va_start(ap, fmt);
-	ret = vsnprintf(str->data + str->off, str->size - str->off, fmt, ap);
-	str->off += ret;
+	size = str->size - str->off;
+	ret = vsnprintf(str->data + str->off, size, fmt, ap);
 	va_end(ap);
+	str->off += MIN(ret, size);
 
 	return ret;
 }
