@@ -20,10 +20,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <linux/limits.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 
