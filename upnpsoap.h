@@ -22,7 +22,7 @@
 #define __UPNPSOAP_H__
 
 #define DEFAULT_RESP_SIZE 131072
-#define MAX_RESPONSE_SIZE 2097152
+#define MAX_RESPONSE_SIZE 0
 
 #define CONTENT_DIRECTORY_SCHEMAS \
 	" xmlns:dc=\"http://purl.org/dc/elements/1.1/\"" \
