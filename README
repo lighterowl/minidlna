@@ -1,3 +1,17 @@
+# This is an unofficial fork
+This is my own fork which is not supported in any way by the original
+authors. It contains modifications that I use in my own installation of
+minidlna, which _may_ be exclusive to my own setup and thus might not
+work in your case, or you might find them annoying.
+
+No compatibility guarantees (in terms of working with other hardware, or
+the program's database format) are made. Be prepared to rebuild your DB
+from scratch or your devices not suddenly working with this particular
+version.
+
+You are of course by all means welcome to use these sources : if you do,
+I'll appreciate the feedback. Thanks in advance!
+
 MiniDLNA project
 (c) 2009 Justin Maggard
 Portions (c) 2006-2007 Thomas Bernard
