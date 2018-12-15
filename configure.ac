@@ -34,6 +34,10 @@ AM_GNU_GETTEXT_VERSION(0.18)
 AC_PROG_AWK
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PROG_CC_C99
+if test x"$ac_cv_prog_cc_c99" == x"no"; then
+    AC_MSG_ERROR([minidlna requires a C99 compatible compiler])
+fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
