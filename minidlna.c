@@ -746,6 +746,10 @@ init(int argc, char **argv)
 			if (strtobool(ary_options[i].value))
 				SETFLAG(DLNA_STRICT_MASK);
 			break;
+		case RESIZE_COVER_ART:
+			if((strcmp(ary_options[i].value, "no") == 0) || !atoi(ary_options[i].value))
+				SETFLAG(NO_COVER_RESIZE_MASK);
+			break;
 		case ROOT_CONTAINER:
 			switch (ary_options[i].value[0]) {
 			case '.':

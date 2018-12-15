@@ -67,6 +67,9 @@ save_resized_album_art(image_s *imsrc, const char *path)
 	strncpyt(cache_dir, cache_file, sizeof(cache_dir));
 	make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
 
+	if( GETFLAG(NO_COVER_RESIZE_MASK) )
+		return image_save_to_jpeg_file(imsrc, cache_file);
+
 	if( imsrc->width > imsrc->height )
 	{
 		dstw = 160;
