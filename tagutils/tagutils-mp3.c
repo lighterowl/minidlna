@@ -216,6 +216,11 @@ _get_mp3tags(char *file, struct song_metadata *psong)
 				{
 					psong->compilation = (char)atoi((char*)utf8_text);
 				}
+				else if(!strcmp(pid3frame->id, "TMED"))
+				{
+					used = 1;
+					psong->media = (char*)utf8_text;
+				}
 			}
 		}
 

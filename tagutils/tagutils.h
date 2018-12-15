@@ -106,6 +106,8 @@ struct song_metadata {
 	int is_plist;
 	int plist_position;
 	int plist_id;
+
+	char *media;
 };
 
 #define WMA     0x161

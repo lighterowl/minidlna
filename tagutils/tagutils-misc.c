@@ -291,4 +291,8 @@ vc_scan(struct song_metadata *psong, const char *comment, const size_t length)
 	{
 		psong->musicbrainz_albumartistid = strdup(strbuf + 26);
 	}
+	else if(!strncasecmp(strbuf, "MEDIA=", 6))
+	{
+		psong->media = strdup(strbuf + 6);
+	}
 }

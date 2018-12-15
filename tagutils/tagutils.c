@@ -270,6 +270,32 @@ _get_tags(char *file, struct song_metadata *psong)
 	return 0;
 }
 
+static void extract_media_from_dirname(struct song_metadata *psong, const char *path)
+{
+	const char *dirname_end = strrchr(path, '/');
+	if(!dirname_end || dirname_end == path || dirname_end - 1 == path) return;
+	dirname_end--;
+
+	const char *dirname_beg = dirname_end;
+	while(dirname_beg != path && *dirname_beg != '/') {
+		dirname_beg--;
+	}
+	if(dirname_beg == path) return;
+	dirname_beg++;
+
+	const char *curl_beg = strrchr(dirname_beg, '{');
+	if(!curl_beg || curl_beg > dirname_end) return;
+
+	const char *curl_end = strrchr(curl_beg + 1, '}');
+	if(!curl_end || curl_end > dirname_end) return;
+
+	size_t len = curl_end - curl_beg;
+	char *media = malloc(len);
+	strncpy(media, curl_beg + 1, len - 1);
+	media[len - 1] = 0;
+	psong->media = media;
+}
+
 /*****************************************************************************/
 // readtags
 int
@@ -299,7 +325,12 @@ readtags(char *path, struct song_metadata *psong, struct stat *stat, char *lang,
 	{
 		_make_composite_tags(psong);
 	}
-	
+
+	if(!psong->media)
+	{
+		extract_media_from_dirname(psong, path);
+	}
+
 	// get fileinfo
 	return _get_fileinfo(path, psong);
 }

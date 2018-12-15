@@ -451,8 +451,14 @@ GetAudioMetadata(const char *path, const char *name)
 	if( song.album && *song.album )
 	{
 		m.album = trim(song.album);
+		if ( song.media && *song.media )
+		{
+			xasprintf(&m.album, "%s {%s}", song.album, song.media);
+			free_flags |= FLAG_ALBUM;
+		}
 		if( (esc_tag = escape_tag(m.album, 0)) )
 		{
+			if (free_flags & FLAG_ALBUM) free(m.album);
 			free_flags |= FLAG_ALBUM;
 			m.album = esc_tag;
 		}
