@@ -212,6 +212,15 @@ sigusr1(int sig)
 }
 
 static void
+sigusr2(int sig)
+{
+	signal(sig, sigusr2);
+	DPRINTF(E_WARN, L_GENERAL, "received signal %d, reload log\n", sig);
+
+	log_reopen();
+}
+
+static void
 sighup(int sig)
 {
 	signal(sig, sighup);
@@ -287,7 +296,7 @@ getfriendlyname(char *buf, int len)
 	fclose(info);
 #else
 	char * logname;
-	logname = getenv("LOGNAME");
+	logname = getenv("USER");
 #ifndef STATIC // Disable for static linking
 	if (!logname)
 	{
@@ -414,6 +423,7 @@ rescan:
 		open_db(&db);
 		if (*scanner_pid == 0) /* child (scanner) process */
 		{
+			open_db(&db);
 			start_scanner();
 			sqlite3_close(db);
 			log_close();
@@ -429,6 +439,7 @@ rescan:
 			SETFLAG(SCANNING_MASK);
 #else
 		start_scanner();
+		sqlite3_close(db);
 #endif
 	}
 }
@@ -1051,6 +1062,8 @@ init(int argc, char **argv)
 	sa.sa_handler = process_handle_child_termination;
 	if (sigaction(SIGCHLD, &sa, NULL))
 		DPRINTF(E_FATAL, L_GENERAL, "Failed to set %s handler. EXITING.\n", "SIGCHLD");
+	if (signal(SIGUSR2, &sigusr2) == SIG_ERR)
+		DPRINTF(E_FATAL, L_GENERAL, "Failed to set %s handler. EXITING.\n", "SIGUSR2");
 
 	if (writepidfile(pidfilename, pid, uid) != 0)
 		pidfilename = NULL;

@@ -29,6 +29,7 @@
 #include "log.h"
 
 static FILE *log_fp = NULL;
+static char *log_filename = NULL;
 static const int _default_log_level = E_WARN;
 int log_level[L_MAX];
 
@@ -59,8 +60,14 @@ const char *level_name[] = {
 void
 log_close(void)
 {
-	if (log_fp)
+	if (log_fp) {
 		fclose(log_fp);
+		log_fp = NULL;
+	}
+	if (log_filename) {
+		free(log_filename);
+		log_filename = NULL;
+	}
 }
 
 void

@@ -60,7 +60,7 @@ time_t startup_time = 0;
 struct runtime_vars_s runtime_vars;
 uint32_t runtime_flags = INOTIFY_MASK | TIVO_BONJOUR_MASK | SUBTITLES_MASK;
 
-const char *pidfilename = "/var/run/minidlna/minidlna.pid";
+const char * pidfilename = "/run/minidlna/minidlna.pid";
 
 char uuidvalue[] = "uuid:00000000-0000-0000-0000-000000000000";
 char modelname[MODELNAME_MAX_LEN] = ROOTDEV_MODELNAME;
@@ -76,7 +76,7 @@ struct lan_addr_s lan_addr[MAX_LAN_ADDR];
 int sssdp = -1;
 
 /* Path of the Unix socket used to communicate with MiniSSDPd */
-const char * minissdpdsocketpath = "/var/run/minissdpd.sock";
+const char * minissdpdsocketpath = "/run/minissdpd.sock";
 
 /* UPnP-A/V [DLNA] */
 sqlite3 *db;
