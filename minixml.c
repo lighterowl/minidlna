@@ -3,18 +3,18 @@
  * webpage: http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * Author : Thomas Bernard
 
-Copyright (c) 2005-2007, Thomas BERNARD 
+Copyright (c) 2005-2007, Thomas BERNARD
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    * The name of the author may not be used to endorse or promote products
+	* Redistributions of source code must retain the above copyright notice,
+	  this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright notice,
+	  this list of conditions and the following disclaimer in the documentation
+	  and/or other materials provided with the distribution.
+	* The name of the author may not be used to endorse or promote products
 	  derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -35,50 +35,53 @@ POSSIBILITY OF SUCH DAMAGE.
 /* parseatt : used to parse the argument list
  * return 0 (false) in case of success and -1 (true) if the end
  * of the xmlbuffer is reached. */
-int parseatt(struct xmlparser * p)
+int
+parseatt(struct xmlparser *p)
 {
-	const char * attname;
+	const char *attname;
 	int attnamelen;
-	const char * attvalue;
+	const char *attvalue;
 	int attvaluelen;
-	while(p->xml < p->xmlend)
+	while (p->xml < p->xmlend)
 	{
-		if(*p->xml=='/' || *p->xml=='>')
+		if (*p->xml == '/' || *p->xml == '>')
 			return 0;
-		if( !IS_WHITE_SPACE(*p->xml) )
+		if (!IS_WHITE_SPACE(*p->xml))
 		{
 			char sep;
 			attname = p->xml;
 			attnamelen = 0;
-			while(*p->xml!='=' && !IS_WHITE_SPACE(*p->xml) )
+			while (*p->xml != '=' && !IS_WHITE_SPACE(*p->xml))
 			{
-				attnamelen++; p->xml++;
-				if(p->xml >= p->xmlend)
+				attnamelen++;
+				p->xml++;
+				if (p->xml >= p->xmlend)
 					return -1;
 			}
-			while(*(p->xml++) != '=')
+			while (*(p->xml++) != '=')
 			{
-				if(p->xml >= p->xmlend)
+				if (p->xml >= p->xmlend)
 					return -1;
 			}
-			while(IS_WHITE_SPACE(*p->xml))
+			while (IS_WHITE_SPACE(*p->xml))
 			{
 				p->xml++;
-				if(p->xml >= p->xmlend)
+				if (p->xml >= p->xmlend)
 					return -1;
 			}
 			sep = *p->xml;
-			if(sep=='\'' || sep=='\"')
+			if (sep == '\'' || sep == '\"')
 			{
 				p->xml++;
-				if(p->xml >= p->xmlend)
+				if (p->xml >= p->xmlend)
 					return -1;
 				attvalue = p->xml;
 				attvaluelen = 0;
-				while(*p->xml != sep)
+				while (*p->xml != sep)
 				{
-					attvaluelen++; p->xml++;
-					if(p->xml >= p->xmlend)
+					attvaluelen++;
+					p->xml++;
+					if (p->xml >= p->xmlend)
 						return -1;
 				}
 			}
@@ -86,17 +89,18 @@ int parseatt(struct xmlparser * p)
 			{
 				attvalue = p->xml;
 				attvaluelen = 0;
-				while(   !IS_WHITE_SPACE(*p->xml)
-					  && *p->xml != '>' && *p->xml != '/')
+				while (!IS_WHITE_SPACE(*p->xml) && *p->xml != '>' &&
+					   *p->xml != '/')
 				{
-					attvaluelen++; p->xml++;
-					if(p->xml >= p->xmlend)
+					attvaluelen++;
+					p->xml++;
+					if (p->xml >= p->xmlend)
 						return -1;
 				}
 			}
 			/*printf("%.*s='%.*s'\n",
-			       attnamelen, attname, attvaluelen, attvalue);*/
-			if(p->attfunc)
+				   attnamelen, attname, attvaluelen, attvalue);*/
+			if (p->attfunc)
 				p->attfunc(p->data, attname, attnamelen, attvalue, attvaluelen);
 		}
 		p->xml++;
@@ -106,50 +110,55 @@ int parseatt(struct xmlparser * p)
 
 /* parseelt parse the xml stream and
  * call the callback functions when needed... */
-void parseelt(struct xmlparser * p)
+void
+parseelt(struct xmlparser *p)
 {
 	int i;
-	const char * elementname;
-	while(p->xml < (p->xmlend - 1))
+	const char *elementname;
+	while (p->xml < (p->xmlend - 1))
 	{
-		if((p->xml)[0]=='<' && (p->xml)[1]!='?')
+		if ((p->xml)[0] == '<' && (p->xml)[1] != '?')
 		{
-			i = 0; elementname = ++p->xml;
-			while( !IS_WHITE_SPACE(*p->xml)
-				  && (*p->xml!='>') && (*p->xml!='/')
-				 )
+			i = 0;
+			elementname = ++p->xml;
+			while (!IS_WHITE_SPACE(*p->xml) && (*p->xml != '>') &&
+				   (*p->xml != '/'))
 			{
-				i++; p->xml++;
+				i++;
+				p->xml++;
 				if (p->xml >= p->xmlend)
 					return;
 				/* to ignore namespace : */
-				if(*p->xml==':')
+				if (*p->xml == ':')
 				{
 					i = 0;
 					elementname = ++p->xml;
 				}
 			}
-			if(i>0)
+			if (i > 0)
 			{
-				if(p->starteltfunc)
+				if (p->starteltfunc)
 					p->starteltfunc(p->data, elementname, i);
-				if(parseatt(p))
+				if (parseatt(p))
 					return;
-				if(*p->xml!='/')
+				if (*p->xml != '/')
 				{
-					const char * data;
-					i = 0; data = ++p->xml;
+					const char *data;
+					i = 0;
+					data = ++p->xml;
 					if (p->xml >= p->xmlend)
 						return;
-					while( IS_WHITE_SPACE(*p->xml) )
+					while (IS_WHITE_SPACE(*p->xml))
 					{
-						i++; p->xml++;
+						i++;
+						p->xml++;
 						if (p->xml >= p->xmlend)
 							return;
 					}
-					while(*p->xml!='<')
+					while (*p->xml != '<')
 					{
-						i++; p->xml++;
+						i++;
+						p->xml++;
 						if (p->xml >= p->xmlend)
 							return;
 					}
@@ -160,18 +169,20 @@ void parseelt(struct xmlparser * p)
 					}
 				}
 			}
-			else if(*p->xml == '/')
+			else if (*p->xml == '/')
 			{
-				i = 0; elementname = ++p->xml;
+				i = 0;
+				elementname = ++p->xml;
 				if (p->xml >= p->xmlend)
 					return;
-				while((*p->xml != '>'))
+				while ((*p->xml != '>'))
 				{
-					i++; p->xml++;
+					i++;
+					p->xml++;
 					if (p->xml >= p->xmlend)
 						return;
 				}
-				if(p->endeltfunc)
+				if (p->endeltfunc)
 					p->endeltfunc(p->data, elementname, i);
 				p->xml++;
 			}
@@ -184,11 +195,10 @@ void parseelt(struct xmlparser * p)
 }
 
 /* the parser must be initialized before calling this function */
-void parsexml(struct xmlparser * parser)
+void
+parsexml(struct xmlparser *parser)
 {
 	parser->xml = parser->xmlstart;
 	parser->xmlend = parser->xmlstart + parser->xmlsize;
 	parseelt(parser);
 }
-
-

@@ -16,7 +16,8 @@
  * along with MiniDLNA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-struct container_s {
+struct container_s
+{
 	const char *object_id;
 	const char *parent_id;
 	const char *name;
@@ -24,7 +25,8 @@ struct container_s {
 
 extern const struct container_s containers[];
 
-struct magic_container_s {
+struct magic_container_s
+{
 	const char *name;
 	const char *objectid_match;
 	const char **objectid;
@@ -40,5 +42,7 @@ struct magic_container_s {
 
 extern const struct magic_container_s magic_containers[];
 
-const struct magic_container_s *in_magic_container(const char *id, int flags, const char **real_id);
-const struct magic_container_s *check_magic_container(const char *id, int flags);
+const struct magic_container_s *
+in_magic_container(const char *id, int flags, const char **real_id);
+const struct magic_container_s *
+check_magic_container(const char *id, int flags);

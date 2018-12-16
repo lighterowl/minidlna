@@ -32,7 +32,8 @@
 #include <unistd.h>
 #include "clients.h"
 
-struct child {
+struct child
+{
 	pid_t pid;
 	time_t age;
 	struct client_cache_s *client;
@@ -47,7 +48,8 @@ extern int number_of_children;
  * @return -1 if it couldn't fork, 0 in the child process, the pid of the
  *         child process in the parent process.
  */
-pid_t process_fork(struct client_cache_s *client);
+pid_t
+process_fork(struct client_cache_s *client);
 
 /**
  * Handler to be called upon receiving SIGCHLD. This signal is received by the
@@ -55,14 +57,16 @@ pid_t process_fork(struct client_cache_s *client);
  * of running childs accordingly.
  * @param signal The signal number.
  */
-void process_handle_child_termination(int signal);
+void
+process_handle_child_termination(int signal);
 
 /**
  * Daemonize the current process by forking itself and redirecting standard
  * input, standard output and standard error to /dev/null.
  * @return The pid of the process.
- */ 
-int process_daemonize(void);
+ */
+int
+process_daemonize(void);
 
 /**
  * Check if the process corresponding to the pid found in the pid file is
@@ -71,11 +75,13 @@ int process_daemonize(void);
  * @return 0 if no other instance is running, -1 if the file name is invalid,
  *         -2 if another instance is running.
  */
-int process_check_if_running(const char *fname);
+int
+process_check_if_running(const char *fname);
 
 /**
  * Kill all child processes
  */
-void process_reap_children(void);
+void
+process_reap_children(void);
 
 #endif // __PROCESS_H__

@@ -42,10 +42,10 @@
 static int
 art_cache_exists(const char *orig_path, char **cache_file)
 {
-	if( xasprintf(cache_file, "%s/art_cache%s", db_path, orig_path) < 0 )
+	if (xasprintf(cache_file, "%s/art_cache%s", db_path, orig_path) < 0)
 		return 0;
 
-	strcpy(strchr(*cache_file, '\0')-4, ".jpg");
+	strcpy(strchr(*cache_file, '\0') - 4, ".jpg");
 
 	return (!access(*cache_file, F_OK));
 }
@@ -58,30 +58,31 @@ save_resized_album_art(image_s *imsrc, const char *path)
 	char *cache_file;
 	char cache_dir[MAXPATHLEN];
 
-	if( !imsrc )
+	if (!imsrc)
 		return NULL;
 
-	if( art_cache_exists(path, &cache_file) )
+	if (art_cache_exists(path, &cache_file))
 		return cache_file;
 
 	strncpyt(cache_dir, cache_file, sizeof(cache_dir));
-	make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+	make_dir(dirname(cache_dir),
+			 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
-	if( GETFLAG(NO_COVER_RESIZE_MASK) )
+	if (GETFLAG(NO_COVER_RESIZE_MASK))
 		return image_save_to_jpeg_file(imsrc, cache_file);
 
-	if( imsrc->width > imsrc->height )
+	if (imsrc->width > imsrc->height)
 	{
 		dstw = 160;
-		dsth = (imsrc->height<<8) / ((imsrc->width<<8)/160);
+		dsth = (imsrc->height << 8) / ((imsrc->width << 8) / 160);
 	}
 	else
 	{
-		dstw = (imsrc->width<<8) / ((imsrc->height<<8)/160);
+		dstw = (imsrc->width << 8) / ((imsrc->height << 8) / 160);
 		dsth = 160;
 	}
 	imdst = image_resize(imsrc, dstw, dsth);
-	if( !imdst )
+	if (!imdst)
 	{
 		free(cache_file);
 		return NULL;
@@ -89,7 +90,7 @@ save_resized_album_art(image_s *imsrc, const char *path)
 
 	cache_file = image_save_to_jpeg_file(imdst, cache_file);
 	image_free(imdst);
-	
+
 	return cache_file;
 }
 
@@ -114,9 +115,9 @@ update_if_album_art(const char *path)
 	strncpyt(fpath, path, sizeof(fpath));
 	match = basename(fpath);
 	/* Check if this file name matches a specific audio or video file */
-	if( ends_with(match, ".cover.jpg") )
+	if (ends_with(match, ".cover.jpg"))
 	{
-		ncmp = strlen(match)-10;
+		ncmp = strlen(match) - 10;
 	}
 	else
 	{
@@ -127,11 +128,11 @@ update_if_album_art(const char *path)
 
 	strncpyt(dpath, path, sizeof(dpath));
 	dir_type = valid_media_types(dpath);
-	if (!(dir_type & (TYPE_VIDEO|TYPE_AUDIO)))
+	if (!(dir_type & (TYPE_VIDEO | TYPE_AUDIO)))
 		return;
 	dir = dirname(dpath);
 	dh = opendir(dir);
-	if( !dh )
+	if (!dh)
 		return;
 	while ((dp = readdir(dh)) != NULL)
 	{
@@ -148,17 +149,23 @@ update_if_album_art(const char *path)
 		if (type != TYPE_FILE || dp->d_name[0] == '.')
 			continue;
 
-		if(((is_video(dp->d_name) && (dir_type & TYPE_VIDEO)) ||
-		    (is_audio(dp->d_name) && (dir_type & TYPE_AUDIO))) &&
-		    (album_art || strncmp(dp->d_name, match, ncmp) == 0) )
+		if (((is_video(dp->d_name) && (dir_type & TYPE_VIDEO)) ||
+			 (is_audio(dp->d_name) && (dir_type & TYPE_AUDIO))) &&
+			(album_art || strncmp(dp->d_name, match, ncmp) == 0))
 		{
 			snprintf(file, sizeof(file), "%s/%s", dir, dp->d_name);
 			art_id = find_album_art(file, NULL, 0);
-			ret = sql_exec(db, "UPDATE DETAILS set ALBUM_ART = %lld where PATH = '%q' and ALBUM_ART != %lld", (long long)art_id, file, (long long)art_id);
-			if( ret == SQLITE_OK )
-				DPRINTF(E_DEBUG, L_METADATA, "Updated cover art for %s to %s\n", dp->d_name, path);
+			ret = sql_exec(db,
+						   "UPDATE DETAILS set ALBUM_ART = %lld where PATH = "
+						   "'%q' and ALBUM_ART != %lld",
+						   (long long)art_id, file, (long long)art_id);
+			if (ret == SQLITE_OK)
+				DPRINTF(E_DEBUG, L_METADATA, "Updated cover art for %s to %s\n",
+						dp->d_name, path);
 			else
-				DPRINTF(E_WARN, L_METADATA, "Error setting %s as cover art for %s\n", match, dp->d_name);
+				DPRINTF(E_WARN, L_METADATA,
+						"Error setting %s as cover art for %s\n", match,
+						dp->d_name);
 		}
 	}
 	closedir(dh);
@@ -177,41 +184,45 @@ check_embedded_art(const char *path, uint8_t *image_data, int image_size)
 	static int last_success = 0;
 	unsigned int hash;
 
-	if( !image_data || !image_size || !path )
+	if (!image_data || !image_size || !path)
 	{
 		return NULL;
 	}
 	/* If the embedded image matches the embedded image from the last file we
-	 * checked, just make a hard link.  Better than storing it on the disk twice. */
+	 * checked, just make a hard link.  Better than storing it on the disk
+	 * twice. */
 	hash = DJBHash(image_data, image_size);
-	if( hash == last_hash )
+	if (hash == last_hash)
 	{
-		if( !last_success )
+		if (!last_success)
 			return NULL;
 		art_cache_exists(path, &art_path);
-		if( link(last_path, art_path) == 0 )
+		if (link(last_path, art_path) == 0)
 		{
-			return(art_path);
+			return (art_path);
 		}
 		else
 		{
-			if( errno == ENOENT )
+			if (errno == ENOENT)
 			{
 				cache_dir = strdup(art_path);
-				make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+				make_dir(dirname(cache_dir),
+						 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 				free(cache_dir);
-				if( link(last_path, art_path) == 0 )
-					return(art_path);
+				if (link(last_path, art_path) == 0)
+					return (art_path);
 			}
-			DPRINTF(E_WARN, L_METADATA, "Linking %s to %s failed [%s]\n", art_path, last_path, strerror(errno));
+			DPRINTF(E_WARN, L_METADATA, "Linking %s to %s failed [%s]\n",
+					art_path, last_path, strerror(errno));
 			free(art_path);
 			art_path = NULL;
 		}
 	}
 	last_hash = hash;
 
-	imsrc = image_new_from_jpeg(NULL, 0, image_data, image_size, 1, ROTATE_NONE);
-	if( !imsrc )
+	imsrc =
+		image_new_from_jpeg(NULL, 0, image_data, image_size, 1, ROTATE_NONE);
+	if (!imsrc)
 	{
 		last_success = 0;
 		return NULL;
@@ -219,20 +230,21 @@ check_embedded_art(const char *path, uint8_t *image_data, int image_size)
 	width = imsrc->width;
 	height = imsrc->height;
 
-	if( width > 160 || height > 160 )
+	if (width > 160 || height > 160)
 	{
 		art_path = save_resized_album_art(imsrc, path);
 	}
-	else if( width > 0 && height > 0 )
+	else if (width > 0 && height > 0)
 	{
 		size_t nwritten;
-		if( art_cache_exists(path, &art_path) )
+		if (art_cache_exists(path, &art_path))
 			goto end_art;
 		cache_dir = strdup(art_path);
-		make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+		make_dir(dirname(cache_dir),
+				 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		free(cache_dir);
 		dstfile = fopen(art_path, "w");
-		if( !dstfile )
+		if (!dstfile)
 		{
 			free(art_path);
 			art_path = NULL;
@@ -240,10 +252,11 @@ check_embedded_art(const char *path, uint8_t *image_data, int image_size)
 		}
 		nwritten = fwrite((void *)image_data, 1, image_size, dstfile);
 		fclose(dstfile);
-		if( nwritten != image_size )
+		if (nwritten != image_size)
 		{
-			DPRINTF(E_WARN, L_METADATA, "Embedded art error: wrote %lu/%d bytes\n",
-				(unsigned long)nwritten, image_size);
+			DPRINTF(E_WARN, L_METADATA,
+					"Embedded art error: wrote %lu/%d bytes\n",
+					(unsigned long)nwritten, image_size);
 			remove(art_path);
 			free(art_path);
 			art_path = NULL;
@@ -252,17 +265,19 @@ check_embedded_art(const char *path, uint8_t *image_data, int image_size)
 	}
 end_art:
 	image_free(imsrc);
-	if( !art_path )
+	if (!art_path)
 	{
-		DPRINTF(E_WARN, L_METADATA, "Invalid embedded album art in %s\n", basename((char *)path));
+		DPRINTF(E_WARN, L_METADATA, "Invalid embedded album art in %s\n",
+				basename((char *)path));
 		last_success = 0;
 		return NULL;
 	}
-	DPRINTF(E_DEBUG, L_METADATA, "Found new embedded album art in %s\n", basename((char *)path));
+	DPRINTF(E_DEBUG, L_METADATA, "Found new embedded album art in %s\n",
+			basename((char *)path));
 	last_success = 1;
 	strcpy(last_path, art_path);
 
-	return(art_path);
+	return (art_path);
 }
 
 static char *
@@ -272,16 +287,16 @@ check_for_album_file(const char *path)
 	char mypath[MAXPATHLEN];
 	struct album_art_name_s *album_art_name;
 	image_s *imsrc = NULL;
-	int width=0, height=0;
+	int width = 0, height = 0;
 	char *art_file, *p;
 	const char *dir;
 	struct stat st;
 	int ret;
 
-	if( stat(path, &st) != 0 )
+	if (stat(path, &st) != 0)
 		return NULL;
 
-	if( S_ISDIR(st.st_mode) )
+	if (S_ISDIR(st.st_mode))
 	{
 		dir = path;
 		goto check_dir;
@@ -292,60 +307,61 @@ check_for_album_file(const char *path)
 	/* First look for file-specific cover art */
 	snprintf(file, sizeof(file), "%s.cover.jpg", path);
 	ret = access(file, R_OK);
-	if( ret != 0 )
+	if (ret != 0)
 	{
 		strncpyt(file, path, sizeof(file));
 		p = strrchr(file, '.');
-		if( p )
+		if (p)
 		{
 			strcpy(p, ".jpg");
 			ret = access(file, R_OK);
 		}
-		if( ret != 0 )
+		if (ret != 0)
 		{
 			p = strrchr(file, '/');
-			if( p )
+			if (p)
 			{
-				memmove(p+2, p+1, file+MAXPATHLEN-p-2);
+				memmove(p + 2, p + 1, file + MAXPATHLEN - p - 2);
 				p[1] = '.';
 				ret = access(file, R_OK);
 			}
 		}
 	}
-	if( ret == 0 )
+	if (ret == 0)
 	{
-		if( art_cache_exists(file, &art_file) )
+		if (art_cache_exists(file, &art_file))
 			goto existing_file;
 		free(art_file);
 		imsrc = image_new_from_jpeg(file, 1, NULL, 0, 1, ROTATE_NONE);
-		if( imsrc )
+		if (imsrc)
 			goto found_file;
 	}
 check_dir:
 	/* Then fall back to possible generic cover art file names */
-	for( album_art_name = album_art_names; album_art_name; album_art_name = album_art_name->next )
+	for (album_art_name = album_art_names; album_art_name;
+		 album_art_name = album_art_name->next)
 	{
 		snprintf(file, sizeof(file), "%s/%s", dir, album_art_name->name);
-		if( access(file, R_OK) == 0 )
+		if (access(file, R_OK) == 0)
 		{
-			if( art_cache_exists(file, &art_file) )
+			if (art_cache_exists(file, &art_file))
 			{
-existing_file:
+			existing_file:
 				return art_file;
 			}
 			free(art_file);
 			imsrc = image_new_from_jpeg(file, 1, NULL, 0, 1, ROTATE_NONE);
-			if( !imsrc )
+			if (!imsrc)
 				continue;
-found_file:
+		found_file:
 			width = imsrc->width;
 			height = imsrc->height;
-			if( width > 160 || height > 160 )
+			if (width > 160 || height > 160)
 				art_file = save_resized_album_art(imsrc, file);
 			else
 				art_file = strdup(file);
 			image_free(imsrc);
-			return(art_file);
+			return (art_file);
 		}
 	}
 	return NULL;
@@ -357,13 +373,16 @@ find_album_art(const char *path, uint8_t *image_data, int image_size)
 	char *album_art = NULL;
 	int64_t ret = 0;
 
-	if( (image_size && (album_art = check_embedded_art(path, image_data, image_size))) ||
-	    (album_art = check_for_album_file(path)) )
+	if ((image_size &&
+		 (album_art = check_embedded_art(path, image_data, image_size))) ||
+		(album_art = check_for_album_file(path)))
 	{
-		ret = sql_get_int_field(db, "SELECT ID from ALBUM_ART where PATH = '%q'", album_art);
-		if( !ret )
+		ret = sql_get_int_field(
+			db, "SELECT ID from ALBUM_ART where PATH = '%q'", album_art);
+		if (!ret)
 		{
-			if( sql_exec(db, "INSERT into ALBUM_ART (PATH) VALUES ('%q')", album_art) == SQLITE_OK )
+			if (sql_exec(db, "INSERT into ALBUM_ART (PATH) VALUES ('%q')",
+						 album_art) == SQLITE_OK)
 				ret = sqlite3_last_insert_rowid(db);
 		}
 	}

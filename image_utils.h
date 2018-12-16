@@ -24,35 +24,37 @@
 #include <inttypes.h>
 
 #define ROTATE_NONE 0x0
-#define ROTATE_90   0x1
-#define ROTATE_180  0x2
-#define ROTATE_270  0x4
+#define ROTATE_90 0x1
+#define ROTATE_180 0x2
+#define ROTATE_270 0x4
 
 typedef uint32_t pix;
 
-typedef struct {
+typedef struct
+{
 	int32_t width;
 	int32_t height;
-	pix     *buf;
+	pix *buf;
 } image_s;
 
 void
 image_free(image_s *pimage);
 
 int
-image_get_jpeg_date_xmp(const char * path, char ** date);
+image_get_jpeg_date_xmp(const char *path, char **date);
 
 int
-image_get_jpeg_resolution(const char * path, int * width, int * height);
+image_get_jpeg_resolution(const char *path, int *width, int *height);
 
 image_s *
-image_new_from_jpeg(const char *path, int is_file, const uint8_t *ptr, int size, int scale, int resize);
+image_new_from_jpeg(const char *path, int is_file, const uint8_t *ptr, int size,
+					int scale, int resize);
 
 image_s *
-image_resize(image_s * src_image, int32_t width, int32_t height);
+image_resize(image_s *src_image, int32_t width, int32_t height);
 
 unsigned char *
-image_save_to_jpeg_buf(image_s * pimage, int * size);
+image_save_to_jpeg_buf(image_s *pimage, int *size);
 
 char *
-image_save_to_jpeg_file(image_s * pimage, char * path);
+image_save_to_jpeg_file(image_s *pimage, char *path);

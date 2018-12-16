@@ -21,19 +21,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define GET_DSF_INT64(p) ((((uint64_t)((p)[7])) << 56) |   \
-			  (((uint64_t)((p)[6])) << 48) |   \
-			  (((uint64_t)((p)[5])) << 40) |   \
-			  (((uint64_t)((p)[4])) << 32) |   \
-			  (((uint64_t)((p)[3])) << 24) |   \
-			  (((uint64_t)((p)[2])) << 16) |   \
-			  (((uint64_t)((p)[1])) << 8) |    \
-			  (((uint64_t)((p)[0]))))
+#define GET_DSF_INT64(p)                                                       \
+	((((uint64_t)((p)[7])) << 56) | (((uint64_t)((p)[6])) << 48) |             \
+	 (((uint64_t)((p)[5])) << 40) | (((uint64_t)((p)[4])) << 32) |             \
+	 (((uint64_t)((p)[3])) << 24) | (((uint64_t)((p)[2])) << 16) |             \
+	 (((uint64_t)((p)[1])) << 8) | (((uint64_t)((p)[0]))))
 
-#define GET_DSF_INT32(p) ((((uint8_t)((p)[3])) << 24) |   \
-			  (((uint8_t)((p)[2])) << 16) |   \
-			  (((uint8_t)((p)[1])) << 8) |     \
-			  (((uint8_t)((p)[0]))))
+#define GET_DSF_INT32(p)                                                       \
+	((((uint8_t)((p)[3])) << 24) | (((uint8_t)((p)[2])) << 16) |               \
+	 (((uint8_t)((p)[1])) << 8) | (((uint8_t)((p)[0]))))
 
 static int
 _get_dsftags(char *file, struct song_metadata *psong)
@@ -56,13 +52,13 @@ _get_dsftags(char *file, struct song_metadata *psong)
 	FILE *fp;
 	struct id3header *pid3;
 	uint32_t len;
-	unsigned char hdr[28] = { 0 };
+	unsigned char hdr[28] = {0};
 	uint64_t total_size = 0;
 	uint64_t pointer_to_metadata_chunk = 0;
 	uint64_t metadata_chunk_size = 0;
 	unsigned char *id3tagbuf = NULL;
 
-	//DEBUG DPRINTF(E_DEBUG,L_SCANNER,"Getting DSF file info\n");
+	// DEBUG DPRINTF(E_DEBUG,L_SCANNER,"Getting DSF file info\n");
 
 	if ((fp = fopen(file, "rb")) == NULL)
 	{
@@ -78,7 +74,7 @@ _get_dsftags(char *file, struct song_metadata *psong)
 		return -1;
 	}
 
-	if (strncmp((char*)hdr, "DSD ", 4))
+	if (strncmp((char *)hdr, "DSD ", 4))
 	{
 		DPRINTF(E_WARN, L_SCANNER, "Invalid DSD Chunk header in %s\n", file);
 		fclose(fp);
@@ -88,11 +84,11 @@ _get_dsftags(char *file, struct song_metadata *psong)
 	total_size = GET_DSF_INT64(hdr + 12);
 	pointer_to_metadata_chunk = GET_DSF_INT64(hdr + 20);
 
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", total_size);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", pointer_to_metadata_chunk);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", metadata_chunk_size);
+	// DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", total_size);
+	// DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", pointer_to_metadata_chunk);
+	// DEBUG DPRINTF(E_DEBUG, L_SCANNER, "%llu\n", metadata_chunk_size);
 
-	//check invalid metadata
+	// check invalid metadata
 	if (total_size == 0)
 	{
 		fclose(fp);
@@ -120,11 +116,13 @@ _get_dsftags(char *file, struct song_metadata *psong)
 
 	fseeko(fp, pointer_to_metadata_chunk, SEEK_SET);
 
-	id3tagbuf = (unsigned char*)malloc(sizeof(unsigned char) * metadata_chunk_size);
+	id3tagbuf =
+		(unsigned char *)malloc(sizeof(unsigned char) * metadata_chunk_size);
 	if (id3tagbuf == NULL)
 	{
 		fclose(fp);
-		DPRINTF(E_WARN, L_SCANNER, "Out of memory.Big MetadataSize in %s\n", file);
+		DPRINTF(E_WARN, L_SCANNER, "Out of memory.Big MetadataSize in %s\n",
+				file);
 		return -1;
 	}
 	memset(id3tagbuf, 0, sizeof(unsigned char) * metadata_chunk_size);
@@ -133,7 +131,8 @@ _get_dsftags(char *file, struct song_metadata *psong)
 	{
 		fclose(fp);
 		free(id3tagbuf);
-		DPRINTF(E_WARN, L_SCANNER, "Could not read Metadata Chunk from %s\n", file);
+		DPRINTF(E_WARN, L_SCANNER, "Could not read Metadata Chunk from %s\n",
+				file);
 		return -1;
 	}
 
@@ -148,15 +147,15 @@ _get_dsftags(char *file, struct song_metadata *psong)
 		return -1;
 	}
 
-	pid3 = (struct id3header*)id3tagbuf;
+	pid3 = (struct id3header *)id3tagbuf;
 
-	if (strncmp((char*)pid3->id, "ID3", 3) == 0)
+	if (strncmp((char *)pid3->id, "ID3", 3) == 0)
 	{
 		char tagversion[16];
 
 		/* found an ID3 header... */
 		snprintf(tagversion, sizeof(tagversion), "ID3v2.%d.%d",
-			 pid3->version[0], pid3->version[1]);
+				 pid3->version[0], pid3->version[1]);
 		psong->tagversion = strdup(tagversion);
 	}
 	pid3 = NULL;
@@ -170,30 +169,37 @@ _get_dsftags(char *file, struct song_metadata *psong)
 		have_utf8 = 0;
 		have_text = 0;
 
-		if (!strcmp(pid3frame->id, "YTCP"))   /* for id3v2.2 */
+		if (!strcmp(pid3frame->id, "YTCP")) /* for id3v2.2 */
 		{
 			psong->compilation = 1;
-			DPRINTF(E_DEBUG, L_SCANNER, "Compilation: %d [%s]\n", psong->compilation, basename(file));
+			DPRINTF(E_DEBUG, L_SCANNER, "Compilation: %d [%s]\n",
+					psong->compilation, basename(file));
 		}
 		else if (!strcmp(pid3frame->id, "APIC") && !image_size)
 		{
-			if ((strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "image/jpeg") == 0) ||
-			    (strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "image/jpg") == 0) ||
-			    (strcmp((char*)id3_field_getlatin1(&pid3frame->fields[1]), "jpeg") == 0))
+			if ((strcmp((char *)id3_field_getlatin1(&pid3frame->fields[1]),
+						"image/jpeg") == 0) ||
+				(strcmp((char *)id3_field_getlatin1(&pid3frame->fields[1]),
+						"image/jpg") == 0) ||
+				(strcmp((char *)id3_field_getlatin1(&pid3frame->fields[1]),
+						"jpeg") == 0))
 			{
-				image = id3_field_getbinarydata(&pid3frame->fields[4], &image_size);
+				image =
+					id3_field_getbinarydata(&pid3frame->fields[4], &image_size);
 				if (image_size)
 				{
 					psong->image = malloc(image_size);
 					memcpy(psong->image, image, image_size);
 					psong->image_size = image_size;
-					//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "Found thumbnail: %d\n", psong->image_size);
+					// DEBUG DPRINTF(E_DEBUG, L_SCANNER, "Found thumbnail:
+					// %d\n", psong->image_size);
 				}
 			}
 		}
 
-		if (((pid3frame->id[0] == 'T') || (strcmp(pid3frame->id, "COMM") == 0)) &&
-		    (id3_field_getnstrings(&pid3frame->fields[1])))
+		if (((pid3frame->id[0] == 'T') ||
+			 (strcmp(pid3frame->id, "COMM") == 0)) &&
+			(id3_field_getnstrings(&pid3frame->fields[1])))
 			have_text = 1;
 
 		if (have_text)
@@ -206,47 +212,48 @@ _get_dsftags(char *file, struct song_metadata *psong)
 				if (lang_index >= 0)
 					utf8_text = _get_utf8_text(native_text); // through iconv
 				else
-					utf8_text = (unsigned char*)id3_ucs4_utf8duplicate(native_text);
+					utf8_text =
+						(unsigned char *)id3_ucs4_utf8duplicate(native_text);
 
 				if (!strcmp(pid3frame->id, "TIT2"))
 				{
 					used = 1;
-					psong->title = (char*)utf8_text;
+					psong->title = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TPE1"))
 				{
 					used = 1;
-					psong->contributor[ROLE_ARTIST] = (char*)utf8_text;
+					psong->contributor[ROLE_ARTIST] = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TALB"))
 				{
 					used = 1;
-					psong->album = (char*)utf8_text;
+					psong->album = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TCOM"))
 				{
 					used = 1;
-					psong->contributor[ROLE_COMPOSER] = (char*)utf8_text;
+					psong->contributor[ROLE_COMPOSER] = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TIT1"))
 				{
 					used = 1;
-					psong->grouping = (char*)utf8_text;
+					psong->grouping = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TPE2"))
 				{
 					used = 1;
-					psong->contributor[ROLE_BAND] = (char*)utf8_text;
+					psong->contributor[ROLE_BAND] = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TPE3"))
 				{
 					used = 1;
-					psong->contributor[ROLE_CONDUCTOR] = (char*)utf8_text;
+					psong->contributor[ROLE_CONDUCTOR] = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TCON"))
 				{
 					used = 1;
-					psong->genre = (char*)utf8_text;
+					psong->genre = (char *)utf8_text;
 					got_numeric_genre = 0;
 					if (psong->genre)
 					{
@@ -260,9 +267,10 @@ _get_dsftags(char *file, struct song_metadata *psong)
 							genre = atoi(psong->genre);
 							got_numeric_genre = 1;
 						}
-						else if ((psong->genre[0] == '(') && (isdigit(psong->genre[1])))
+						else if ((psong->genre[0] == '(') &&
+								 (isdigit(psong->genre[1])))
 						{
-							genre = atoi((char*)&psong->genre[1]);
+							genre = atoi((char *)&psong->genre[1]);
 							got_numeric_genre = 1;
 						}
 
@@ -278,43 +286,43 @@ _get_dsftags(char *file, struct song_metadata *psong)
 				else if (!strcmp(pid3frame->id, "COMM"))
 				{
 					used = 1;
-					psong->comment = (char*)utf8_text;
+					psong->comment = (char *)utf8_text;
 				}
 				else if (!strcmp(pid3frame->id, "TPOS"))
 				{
-					tmp = (char*)utf8_text;
+					tmp = (char *)utf8_text;
 					strsep(&tmp, "/");
 					if (tmp)
 					{
 						psong->total_discs = atoi(tmp);
 					}
-					psong->disc = atoi((char*)utf8_text);
+					psong->disc = atoi((char *)utf8_text);
 				}
 				else if (!strcmp(pid3frame->id, "TRCK"))
 				{
-					tmp = (char*)utf8_text;
+					tmp = (char *)utf8_text;
 					strsep(&tmp, "/");
 					if (tmp)
 					{
 						psong->total_tracks = atoi(tmp);
 					}
-					psong->track = atoi((char*)utf8_text);
+					psong->track = atoi((char *)utf8_text);
 				}
 				else if (!strcmp(pid3frame->id, "TDRC"))
 				{
-					psong->year = atoi((char*)utf8_text);
+					psong->year = atoi((char *)utf8_text);
 				}
 				else if (!strcmp(pid3frame->id, "TLEN"))
 				{
-					psong->song_length = atoi((char*)utf8_text);
+					psong->song_length = atoi((char *)utf8_text);
 				}
 				else if (!strcmp(pid3frame->id, "TBPM"))
 				{
-					psong->bpm = atoi((char*)utf8_text);
+					psong->bpm = atoi((char *)utf8_text);
 				}
 				else if (!strcmp(pid3frame->id, "TCMP"))
 				{
-					psong->compilation = (char)atoi((char*)utf8_text);
+					psong->compilation = (char)atoi((char *)utf8_text);
 				}
 			}
 		}
@@ -329,20 +337,24 @@ _get_dsftags(char *file, struct song_metadata *psong)
 			native_text = id3_field_getstring(&pid3frame->fields[2]);
 			if (native_text)
 			{
-				utf8_text = (unsigned char*)id3_ucs4_utf8duplicate(native_text);
-				if ((utf8_text) && (strncasecmp((char*)utf8_text, "iTun", 4) != 0))
+				utf8_text =
+					(unsigned char *)id3_ucs4_utf8duplicate(native_text);
+				if ((utf8_text) &&
+					(strncasecmp((char *)utf8_text, "iTun", 4) != 0))
 				{
 					// read comment
 					free(utf8_text);
 
-					native_text = id3_field_getfullstring(&pid3frame->fields[3]);
+					native_text =
+						id3_field_getfullstring(&pid3frame->fields[3]);
 					if (native_text)
 					{
-						utf8_text = (unsigned char*)id3_ucs4_utf8duplicate(native_text);
+						utf8_text = (unsigned char *)id3_ucs4_utf8duplicate(
+							native_text);
 						if (utf8_text)
 						{
 							free(psong->comment);
-							psong->comment = (char*)utf8_text;
+							psong->comment = (char *)utf8_text;
 						}
 					}
 				}
@@ -359,7 +371,8 @@ _get_dsftags(char *file, struct song_metadata *psong)
 	id3_tag_delete(pid3tag);
 	free(id3tagbuf);
 	fclose(fp);
-	//DPRINTF(E_DEBUG, L_SCANNER, "Got id3tag successfully for file=%s\n", file);
+	// DPRINTF(E_DEBUG, L_SCANNER, "Got id3tag successfully for file=%s\n",
+	// file);
 	return 0;
 }
 
@@ -387,14 +400,14 @@ _get_dsffileinfo(char *file, struct song_metadata *psong)
 		return -1;
 	}
 
-	if (strncmp((char*)hdr, "DSD ", 4))
+	if (strncmp((char *)hdr, "DSD ", 4))
 	{
 		DPRINTF(E_WARN, L_SCANNER, "Invalid DSD Chunk headerin %s\n", file);
 		fclose(fp);
 		return -1;
 	}
 
-	if (strncmp((char*)hdr + 28, "fmt ", 4))
+	if (strncmp((char *)hdr + 28, "fmt ", 4))
 	{
 		DPRINTF(E_WARN, L_SCANNER, "Invalid fmt Chunk header in %s\n", file);
 		fclose(fp);
@@ -413,12 +426,13 @@ _get_dsffileinfo(char *file, struct song_metadata *psong)
 	psong->channels = channelnum;
 
 	DPRINTF(E_MAXDEBUG, L_SCANNER, "Got file info successfully for %s\n", file);
-	//DEBUG DPRINTF(E_MAXDEBUG, L_SCANNER, "bitrate is  %d\n", psong->bitrate);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "samplesize is  %d\n", psong->samplesize);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "samplerate is  %d\n", psong->samplerate);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "song_length is  %d\n", psong->song_length);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "channels are  %d\n", psong->channels);
-	//DEBUG DPRINTF(E_DEBUG, L_SCANNER, "samplecount are  %lld\n", samplecount);
+	// DEBUG DPRINTF(E_MAXDEBUG, L_SCANNER, "bitrate is  %d\n", psong->bitrate);
+	// DEBUG DPRINTF(E_DEBUG, L_SCANNER, "samplesize is  %d\n",
+	// psong->samplesize); DEBUG DPRINTF(E_DEBUG, L_SCANNER, "samplerate is
+	// %d\n", psong->samplerate); DEBUG DPRINTF(E_DEBUG, L_SCANNER, "song_length
+	// is  %d\n", psong->song_length); DEBUG DPRINTF(E_DEBUG, L_SCANNER,
+	// "channels are  %d\n", psong->channels); DEBUG DPRINTF(E_DEBUG, L_SCANNER,
+	// "samplecount are  %lld\n", samplecount);
 	fclose(fp);
 
 	xasprintf(&(psong->dlna_pn), "DSF");

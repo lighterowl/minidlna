@@ -73,9 +73,10 @@
 #include "log.h"
 
 /* stuctures definitions */
-struct subscriber {
+struct subscriber
+{
 	LIST_ENTRY(subscriber) entries;
-	struct upnp_event_notify * notify;
+	struct upnp_event_notify *notify;
 	time_t timeout;
 	uint32_t seq;
 	enum subscriber_service_enum service;
@@ -83,52 +84,59 @@ struct subscriber {
 	char callback[];
 };
 
-struct upnp_event_notify {
+struct upnp_event_notify
+{
 	struct event ev;
 	LIST_ENTRY(upnp_event_notify) entries;
-	enum { EConnecting,
-	       ESending,
-	       EWaitingForResponse,
-	       EFinished,
-	       EError } state;
-	struct subscriber * sub;
-	char * buffer;
+	enum
+	{
+		EConnecting,
+		ESending,
+		EWaitingForResponse,
+		EFinished,
+		EError
+	} state;
+	struct subscriber *sub;
+	char *buffer;
 	int buffersize;
 	int tosend;
 	int sent;
-	const char * path;
+	const char *path;
 	char addrstr[16];
 	char portstr[8];
 };
 
 /* prototypes */
-static void upnp_event_create_notify(struct subscriber * sub);
-static void upnp_event_process_notify(struct event *ev);
+static void
+upnp_event_create_notify(struct subscriber *sub);
+static void
+upnp_event_process_notify(struct event *ev);
 
 /* Subscriber list */
-LIST_HEAD(listhead, subscriber) subscriberlist = { NULL };
+LIST_HEAD(listhead, subscriber) subscriberlist = {NULL};
 
 /* notify list */
-LIST_HEAD(listheadnotif, upnp_event_notify) notifylist = { NULL };
+LIST_HEAD(listheadnotif, upnp_event_notify) notifylist = {NULL};
 
 #define MAX_SUBSCRIBERS 500
 static uint16_t nsubscribers = 0;
 
 /* create a new subscriber */
 static struct subscriber *
-newSubscriber(const char * eventurl, const char * callback, int callbacklen)
+newSubscriber(const char *eventurl, const char *callback, int callbacklen)
 {
-	struct subscriber * tmp;
-	if(!eventurl || !callback || !callbacklen)
+	struct subscriber *tmp;
+	if (!eventurl || !callback || !callbacklen)
 		return NULL;
-	tmp = calloc(1, sizeof(struct subscriber)+callbacklen+1);
-	if(strcmp(eventurl, CONTENTDIRECTORY_EVENTURL)==0)
+	tmp = calloc(1, sizeof(struct subscriber) + callbacklen + 1);
+	if (strcmp(eventurl, CONTENTDIRECTORY_EVENTURL) == 0)
 		tmp->service = EContentDirectory;
-	else if(strcmp(eventurl, CONNECTIONMGR_EVENTURL)==0)
+	else if (strcmp(eventurl, CONNECTIONMGR_EVENTURL) == 0)
 		tmp->service = EConnectionManager;
-	else if(strcmp(eventurl, X_MS_MEDIARECEIVERREGISTRAR_EVENTURL)==0)
+	else if (strcmp(eventurl, X_MS_MEDIARECEIVERREGISTRAR_EVENTURL) == 0)
 		tmp->service = EMSMediaReceiverRegistrar;
-	else {
+	else
+	{
 		free(tmp);
 		return NULL;
 	}
@@ -136,10 +144,10 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 	tmp->callback[callbacklen] = '\0';
 	/* make a dummy uuid */
 	strncpyt(tmp->uuid, uuidvalue, sizeof(tmp->uuid));
-	if( get_uuid_string(tmp->uuid+5) != 0 )
+	if (get_uuid_string(tmp->uuid + 5) != 0)
 	{
-		tmp->uuid[sizeof(tmp->uuid)-1] = '\0';
-		snprintf(tmp->uuid+37, 5, "%04lx", random() & 0xffff);
+		tmp->uuid[sizeof(tmp->uuid) - 1] = '\0';
+		snprintf(tmp->uuid + 37, 5, "%04lx", random() & 0xffff);
 	}
 
 	return tmp;
@@ -148,19 +156,18 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 /* creates a new subscriber and adds it to the subscriber list
  * also initiate 1st notify */
 const char *
-upnpevents_addSubscriber(const char * eventurl,
-                         const char * callback, int callbacklen,
-                         int timeout)
+upnpevents_addSubscriber(const char *eventurl, const char *callback,
+						 int callbacklen, int timeout)
 {
-	struct subscriber * tmp;
-	DPRINTF(E_DEBUG, L_HTTP, "addSubscriber(%s, %.*s, %d)\n",
-	       eventurl, callbacklen, callback, timeout);
+	struct subscriber *tmp;
+	DPRINTF(E_DEBUG, L_HTTP, "addSubscriber(%s, %.*s, %d)\n", eventurl,
+			callbacklen, callback, timeout);
 	if (nsubscribers >= MAX_SUBSCRIBERS)
 		return NULL;
 	tmp = newSubscriber(eventurl, callback, callbacklen);
-	if(!tmp)
+	if (!tmp)
 		return NULL;
-	if(timeout)
+	if (timeout)
 		tmp->timeout = time(NULL) + timeout;
 	LIST_INSERT_HEAD(&subscriberlist, tmp, entries);
 	nsubscribers++;
@@ -170,11 +177,13 @@ upnpevents_addSubscriber(const char * eventurl,
 
 /* renew a subscription (update the timeout) */
 int
-renewSubscription(const char * sid, int sidlen, int timeout)
+renewSubscription(const char *sid, int sidlen, int timeout)
 {
-	struct subscriber * sub;
-	for(sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next) {
-		if(memcmp(sid, sub->uuid, 41) == 0) {
+	struct subscriber *sub;
+	for (sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next)
+	{
+		if (memcmp(sid, sub->uuid, 41) == 0)
+		{
 			sub->timeout = (timeout ? time(NULL) + timeout : 0);
 			return 0;
 		}
@@ -183,16 +192,18 @@ renewSubscription(const char * sid, int sidlen, int timeout)
 }
 
 int
-upnpevents_removeSubscriber(const char * sid, int sidlen)
+upnpevents_removeSubscriber(const char *sid, int sidlen)
 {
-	struct subscriber * sub;
-	if(!sid)
+	struct subscriber *sub;
+	if (!sid)
 		return -1;
-	DPRINTF(E_DEBUG, L_HTTP, "removeSubscriber(%.*s)\n",
-	       sidlen, sid);
-	for(sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next) {
-		if(memcmp(sid, sub->uuid, 41) == 0) {
-			if(sub->notify) {
+	DPRINTF(E_DEBUG, L_HTTP, "removeSubscriber(%.*s)\n", sidlen, sid);
+	for (sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next)
+	{
+		if (memcmp(sid, sub->uuid, 41) == 0)
+		{
+			if (sub->notify)
+			{
 				sub->notify->sub = NULL;
 			}
 			LIST_REMOVE(sub, entries);
@@ -207,9 +218,11 @@ upnpevents_removeSubscriber(const char * sid, int sidlen)
 void
 upnpevents_removeSubscribers(void)
 {
-	struct subscriber * sub;
+	struct subscriber *sub;
 
-	for(sub = subscriberlist.lh_first; sub != NULL; sub = subscriberlist.lh_first) {
+	for (sub = subscriberlist.lh_first; sub != NULL;
+		 sub = subscriberlist.lh_first)
+	{
 		upnpevents_removeSubscriber(sub->uuid, sizeof(sub->uuid));
 	}
 }
@@ -218,9 +231,10 @@ upnpevents_removeSubscribers(void)
 void
 upnp_event_var_change_notify(enum subscriber_service_enum service)
 {
-	struct subscriber * sub;
-	for(sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next) {
-		if(sub->service == service && sub->notify == NULL)
+	struct subscriber *sub;
+	for (sub = subscriberlist.lh_first; sub != NULL; sub = sub->entries.le_next)
+	{
+		if (sub->service == service && sub->notify == NULL)
 			upnp_event_create_notify(sub);
 	}
 }
@@ -229,7 +243,7 @@ upnp_event_var_change_notify(enum subscriber_service_enum service)
 static void
 upnp_event_create_notify(struct subscriber *sub)
 {
-	struct upnp_event_notify * obj;
+	struct upnp_event_notify *obj;
 	int flags, s, i;
 	const char *p;
 	unsigned short port;
@@ -238,52 +252,63 @@ upnp_event_create_notify(struct subscriber *sub)
 	assert(sub);
 
 	obj = calloc(1, sizeof(struct upnp_event_notify));
-	if(!obj) {
-		DPRINTF(E_ERROR, L_HTTP, "%s: calloc(): %s\n", "upnp_event_create_notify", strerror(errno));
+	if (!obj)
+	{
+		DPRINTF(E_ERROR, L_HTTP, "%s: calloc(): %s\n",
+				"upnp_event_create_notify", strerror(errno));
 		return;
 	}
 	obj->sub = sub;
 	s = socket(PF_INET, SOCK_STREAM, 0);
-	if(s < 0) {
-		DPRINTF(E_ERROR, L_HTTP, "%s: socket(): %s\n", "upnp_event_create_notify", strerror(errno));
+	if (s < 0)
+	{
+		DPRINTF(E_ERROR, L_HTTP, "%s: socket(): %s\n",
+				"upnp_event_create_notify", strerror(errno));
 		goto error;
 	}
-	if((flags = fcntl(s, F_GETFL, 0)) < 0) {
+	if ((flags = fcntl(s, F_GETFL, 0)) < 0)
+	{
 		DPRINTF(E_ERROR, L_HTTP, "%s: fcntl(..F_GETFL..): %s\n",
-		       "upnp_event_create_notify", strerror(errno));
+				"upnp_event_create_notify", strerror(errno));
 		goto error;
 	}
-	if(fcntl(s, F_SETFL, flags | O_NONBLOCK) < 0) {
+	if (fcntl(s, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
 		DPRINTF(E_ERROR, L_HTTP, "%s: fcntl(..F_SETFL..): %s\n",
-		       "upnp_event_create_notify", strerror(errno));
+				"upnp_event_create_notify", strerror(errno));
 		goto error;
 	}
-	if(sub)
+	if (sub)
 		sub->notify = obj;
 	LIST_INSERT_HEAD(&notifylist, obj, entries);
 
 	memset(&addr, 0, sizeof(addr));
 	i = 0;
 	p = obj->sub->callback;
-	p += 7;	/* http:// */
-	while(*p != '/' && *p != ':' && i < (sizeof(obj->addrstr)-1))
+	p += 7; /* http:// */
+	while (*p != '/' && *p != ':' && i < (sizeof(obj->addrstr) - 1))
 		obj->addrstr[i++] = *(p++);
 	obj->addrstr[i] = '\0';
-	if(*p == ':') {
+	if (*p == ':')
+	{
 		obj->portstr[0] = *p;
 		i = 1;
 		p++;
 		port = (unsigned short)atoi(p);
-		while(*p != '/' && *p != '\0') {
-			if(i<7) obj->portstr[i++] = *p;
+		while (*p != '/' && *p != '\0')
+		{
+			if (i < 7)
+				obj->portstr[i++] = *p;
 			p++;
 		}
 		obj->portstr[i] = 0;
-	} else {
+	}
+	else
+	{
 		port = 80;
 		obj->portstr[0] = '\0';
 	}
-	if( *p )
+	if (*p)
 		obj->path = p;
 	else
 		obj->path = "/";
@@ -291,30 +316,38 @@ upnp_event_create_notify(struct subscriber *sub)
 	inet_aton(obj->addrstr, &addr.sin_addr);
 	addr.sin_port = htons(port);
 	DPRINTF(E_DEBUG, L_HTTP, "%s: '%s' %hu '%s'\n", "upnp_event_notify_connect",
-	       obj->addrstr, port, obj->path);
+			obj->addrstr, port, obj->path);
 	obj->state = EConnecting;
-	if(connect(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		if(errno != EINPROGRESS && errno != EWOULDBLOCK) {
-			DPRINTF(E_ERROR, L_HTTP, "%s: connect(): %s\n", "upnp_event_notify_connect", strerror(errno));
+	if (connect(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+	{
+		if (errno != EINPROGRESS && errno != EWOULDBLOCK)
+		{
+			DPRINTF(E_ERROR, L_HTTP, "%s: connect(): %s\n",
+					"upnp_event_notify_connect", strerror(errno));
 			obj->state = EError;
 		}
-	} else {
-		obj->ev = (struct event ){ .fd = s, .rdwr = EVENT_WRITE,
-		    .process = upnp_event_process_notify, .data = obj };
+	}
+	else
+	{
+		obj->ev = (struct event){.fd = s,
+								 .rdwr = EVENT_WRITE,
+								 .process = upnp_event_process_notify,
+								 .data = obj};
 		event_module.add(&obj->ev);
 	}
 
 	return;
 
 error:
-	if(s >= 0)
+	if (s >= 0)
 		close(s);
 	free(obj);
 }
 
-static void upnp_event_prepare(struct upnp_event_notify * obj)
+static void
+upnp_event_prepare(struct upnp_event_notify *obj)
 {
-	static const char notifymsg[] = 
+	static const char notifymsg[] =
 		"NOTIFY %s HTTP/1.1\r\n"
 		"Host: %s%s\r\n"
 		"Content-Type: text/xml; charset=\"utf-8\"\r\n"
@@ -327,12 +360,13 @@ static void upnp_event_prepare(struct upnp_event_notify * obj)
 		"Cache-Control: no-cache\r\n"
 		"\r\n"
 		"%.*s\r\n";
-	char * xml;
+	char *xml;
 	int l;
 
 	assert(obj->sub);
 
-	switch(obj->sub->service) {
+	switch (obj->sub->service)
+	{
 	case EContentDirectory:
 		xml = getVarsContentDirectory(&l);
 		break;
@@ -346,31 +380,37 @@ static void upnp_event_prepare(struct upnp_event_notify * obj)
 		xml = NULL;
 		l = 0;
 	}
-	obj->tosend = asprintf(&(obj->buffer), notifymsg,
-	                       obj->path, obj->addrstr, obj->portstr, l+2,
-	                       obj->sub->uuid, obj->sub->seq,
-	                       l, xml);
+	obj->tosend =
+		asprintf(&(obj->buffer), notifymsg, obj->path, obj->addrstr,
+				 obj->portstr, l + 2, obj->sub->uuid, obj->sub->seq, l, xml);
 	obj->buffersize = obj->tosend;
 	free(xml);
 	DPRINTF(E_DEBUG, L_HTTP, "Sending UPnP Event response:\n%s\n", obj->buffer);
 	obj->state = ESending;
 }
 
-static void upnp_event_send(struct upnp_event_notify * obj)
+static void
+upnp_event_send(struct upnp_event_notify *obj)
 {
 	int i;
-	//DEBUG DPRINTF(E_DEBUG, L_HTTP, "Sending UPnP Event:\n%s", obj->buffer+obj->sent);
-	while( obj->sent < obj->tosend ) {
-		i = send(obj->ev.fd, obj->buffer + obj->sent, obj->tosend - obj->sent, 0);
-		if(i<0) {
-			DPRINTF(E_WARN, L_HTTP, "%s: send(): %s\n", "upnp_event_send", strerror(errno));
+	// DEBUG DPRINTF(E_DEBUG, L_HTTP, "Sending UPnP Event:\n%s",
+	// obj->buffer+obj->sent);
+	while (obj->sent < obj->tosend)
+	{
+		i = send(obj->ev.fd, obj->buffer + obj->sent, obj->tosend - obj->sent,
+				 0);
+		if (i < 0)
+		{
+			DPRINTF(E_WARN, L_HTTP, "%s: send(): %s\n", "upnp_event_send",
+					strerror(errno));
 			obj->state = EError;
 			event_module.del(&obj->ev, 0);
 			return;
 		}
 		obj->sent += i;
 	}
-	if(obj->sent == obj->tosend) {
+	if (obj->sent == obj->tosend)
+	{
 		obj->state = EWaitingForResponse;
 		event_module.del(&obj->ev, 0);
 		obj->ev.rdwr = EVENT_READ;
@@ -378,21 +418,24 @@ static void upnp_event_send(struct upnp_event_notify * obj)
 	}
 }
 
-static void upnp_event_recv(struct upnp_event_notify * obj)
+static void
+upnp_event_recv(struct upnp_event_notify *obj)
 {
 	int n;
 	n = recv(obj->ev.fd, obj->buffer, obj->buffersize, 0);
-	if(n<0) {
-		DPRINTF(E_ERROR, L_HTTP, "%s: recv(): %s\n", "upnp_event_recv", strerror(errno));
+	if (n < 0)
+	{
+		DPRINTF(E_ERROR, L_HTTP, "%s: recv(): %s\n", "upnp_event_recv",
+				strerror(errno));
 		obj->state = EError;
 		event_module.del(&obj->ev, 0);
 		return;
 	}
-	DPRINTF(E_DEBUG, L_HTTP, "%s: (%dbytes) %.*s\n", "upnp_event_recv",
-	       n, n, obj->buffer);
+	DPRINTF(E_DEBUG, L_HTTP, "%s: (%dbytes) %.*s\n", "upnp_event_recv", n, n,
+			obj->buffer);
 	obj->state = EFinished;
 	event_module.del(&obj->ev, 0);
-	if(obj->sub)
+	if (obj->sub)
 	{
 		obj->sub->seq++;
 		if (!obj->sub->seq)
@@ -405,7 +448,8 @@ upnp_event_process_notify(struct event *ev)
 {
 	struct upnp_event_notify *obj = ev->data;
 
-	switch(obj->state) {
+	switch (obj->state)
+	{
 	case EConnecting:
 		/* now connected or failed to connect */
 		upnp_event_prepare(obj);
@@ -426,25 +470,30 @@ upnp_event_process_notify(struct event *ev)
 	}
 }
 
-void upnpevents_gc(void)
+void
+upnpevents_gc(void)
 {
-	struct upnp_event_notify * obj;
-	struct upnp_event_notify * next;
-	struct subscriber * sub;
-	struct subscriber * subnext;
+	struct upnp_event_notify *obj;
+	struct upnp_event_notify *next;
+	struct subscriber *sub;
+	struct subscriber *subnext;
 	time_t curtime;
 
 	obj = notifylist.lh_first;
-	while(obj != NULL) {
+	while (obj != NULL)
+	{
 		next = obj->entries.le_next;
-		if(obj->state == EError || obj->state == EFinished) {
-			if(obj->ev.fd >= 0) {
+		if (obj->state == EError || obj->state == EFinished)
+		{
+			if (obj->ev.fd >= 0)
+			{
 				close(obj->ev.fd);
 			}
-			if(obj->sub)
+			if (obj->sub)
 				obj->sub->notify = NULL;
 			/* remove also the subscriber from the list if there was an error */
-			if(obj->state == EError && obj->sub) {
+			if (obj->state == EError && obj->sub)
+			{
 				LIST_REMOVE(obj->sub, entries);
 				nsubscribers--;
 				free(obj->sub);
@@ -457,9 +506,11 @@ void upnpevents_gc(void)
 	}
 	/* remove timed-out subscribers */
 	curtime = time(NULL);
-	for(sub = subscriberlist.lh_first; sub != NULL; ) {
+	for (sub = subscriberlist.lh_first; sub != NULL;)
+	{
 		subnext = sub->entries.le_next;
-		if(sub->timeout && curtime > sub->timeout && sub->notify == NULL) {
+		if (sub->timeout && curtime > sub->timeout && sub->notify == NULL)
+		{
 			LIST_REMOVE(sub, entries);
 			nsubscribers--;
 			free(sub);

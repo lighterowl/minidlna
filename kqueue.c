@@ -38,7 +38,8 @@
 #include "event.h"
 #include "log.h"
 
-static int kqueue_set(struct event *, short, u_short, u_int);
+static int
+kqueue_set(struct event *, short, u_short, u_int);
 
 static event_module_init_t kqueue_init;
 static event_module_fini_t kqueue_fini;
@@ -51,15 +52,15 @@ static struct kevent *change_list;
 static struct kevent *event_list;
 static u_int nchanges;
 
-#define	MAXCHANGES	128
-#define	MAXEVENTS	128
+#define MAXCHANGES 128
+#define MAXEVENTS 128
 
 struct event_module event_module = {
-	.add =		kqueue_add,
-	.del =		kqueue_del,
-	.process =	kqueue_process,
-	.init =		kqueue_init,
-	.fini =		kqueue_fini,
+	.add = kqueue_add,
+	.del = kqueue_del,
+	.process = kqueue_process,
+	.init = kqueue_init,
+	.fini = kqueue_fini,
 };
 
 static int
@@ -84,7 +85,7 @@ static void
 kqueue_fini()
 {
 
-	(void )close(kq);
+	(void)close(kq);
 	kq = -1;
 
 	free(change_list);
@@ -100,10 +101,13 @@ kqueue_add(struct event *ev)
 	u_int fflags;
 	u_short flags;
 
-	if (ev->rdwr == EVFILT_VNODE) {
+	if (ev->rdwr == EVFILT_VNODE)
+	{
 		flags = EV_ADD | EV_ENABLE | EV_CLEAR;
 		fflags = NOTE_DELETE | NOTE_WRITE | NOTE_EXTEND;
-	} else {
+	}
+	else
+	{
 		flags = EV_ADD | EV_ENABLE;
 		fflags = 0;
 	}
@@ -116,14 +120,15 @@ static int
 kqueue_del(struct event *ev, int flags)
 {
 
-        /*
+	/*
 	 * If the event is still not passed to a kernel,
 	 * we will not pass it.
 	 */
 	assert(ev->fd >= 0);
-	if (ev->index < nchanges &&
-	    change_list[ev->index].udata == ev) {
-		if (ev->index < --nchanges) {
+	if (ev->index < nchanges && change_list[ev->index].udata == ev)
+	{
+		if (ev->index < --nchanges)
+		{
 			struct event *ev0;
 
 			ev0 = (struct event *)change_list[nchanges].udata;
@@ -151,14 +156,17 @@ kqueue_set(struct event *ev, short filter, u_short flags, u_int fflags)
 	struct kevent *kev;
 	struct timespec ts;
 
-	if (nchanges >= MAXCHANGES) {
+	if (nchanges >= MAXCHANGES)
+	{
 		DPRINTF(E_INFO, L_GENERAL, "kqueue change list is filled up\n");
 
 		ts.tv_sec = 0;
 		ts.tv_nsec = 0;
 
-		if (kevent(kq, change_list, (int) nchanges, NULL, 0, &ts) == -1) {
-			DPRINTF(E_ERROR, L_GENERAL,"kevent() failed: %s\n", strerror(errno));
+		if (kevent(kq, change_list, (int)nchanges, NULL, 0, &ts) == -1)
+		{
+			DPRINTF(E_ERROR, L_GENERAL, "kevent() failed: %s\n",
+					strerror(errno));
 			return (errno);
 		}
 		nchanges = 0;
@@ -184,23 +192,26 @@ kqueue_process(u_long timer)
 	int events, n, i;
 	struct timespec ts, *tp;
 
-	n = (int) nchanges;
+	n = (int)nchanges;
 	nchanges = 0;
 
-	if (timer == 0) {
+	if (timer == 0)
+	{
 		tp = NULL;
-	} else {
+	}
+	else
+	{
 		ts.tv_sec = timer / 1000;
 		ts.tv_nsec = (timer % 1000) * 1000000;
 		tp = &ts;
 	}
 
-	DPRINTF(E_DEBUG, L_GENERAL, "kevent timer: %lu, changes: %d\n",
-	    timer, n);
+	DPRINTF(E_DEBUG, L_GENERAL, "kevent timer: %lu, changes: %d\n", timer, n);
 
 	events = kevent(kq, change_list, n, event_list, MAXEVENTS, tp);
 
-	if (events == -1) {
+	if (events == -1)
+	{
 		if (errno == EINTR)
 			return (errno);
 		DPRINTF(E_FATAL, L_GENERAL, "kevent(): %s. EXITING\n", strerror(errno));
@@ -208,24 +219,28 @@ kqueue_process(u_long timer)
 
 	DPRINTF(E_DEBUG, L_GENERAL, "kevent events: %d\n", events);
 
-	if (events == 0) {
+	if (events == 0)
+	{
 		if (timer != 0)
 			return (0);
 		DPRINTF(E_FATAL, L_GENERAL, "kevent() returned no events. EXITING\n");
 	}
 
-	for (i = 0; i < events; i++) {
-		if (event_list[i].flags & EV_ERROR) {
+	for (i = 0; i < events; i++)
+	{
+		if (event_list[i].flags & EV_ERROR)
+		{
 			DPRINTF(E_ERROR, L_GENERAL,
-			    "kevent() error %d on %d filter:%d flags:0x%x\n",
-			    (int)event_list[i].data, (int)event_list[i].ident,
-			    event_list[i].filter, event_list[i].flags);
+					"kevent() error %d on %d filter:%d flags:0x%x\n",
+					(int)event_list[i].data, (int)event_list[i].ident,
+					event_list[i].filter, event_list[i].flags);
 			continue;
 		}
 
 		ev = (struct event *)event_list[i].udata;
 
-		switch (event_list[i].filter) {
+		switch (event_list[i].filter)
+		{
 		case EVFILT_READ:
 		case EVFILT_WRITE:
 			ev->process(ev);
@@ -234,9 +249,8 @@ kqueue_process(u_long timer)
 			ev->process_vnode(ev, event_list[i].fflags);
 			break;
 		default:
-			DPRINTF(E_ERROR, L_GENERAL,
-			    "unexpected kevent() filter %d",
-			    event_list[i].filter);
+			DPRINTF(E_ERROR, L_GENERAL, "unexpected kevent() filter %d",
+					event_list[i].filter);
 			continue;
 		}
 	}

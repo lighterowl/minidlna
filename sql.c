@@ -30,13 +30,13 @@ sql_exec(sqlite3 *db, const char *fmt, ...)
 	char *errMsg = NULL;
 	char *sql;
 	va_list ap;
-	//DPRINTF(E_DEBUG, L_DB_SQL, "SQL: %s\n", sql);
+	// DPRINTF(E_DEBUG, L_DB_SQL, "SQL: %s\n", sql);
 
 	va_start(ap, fmt);
 	sql = sqlite3_vmprintf(fmt, ap);
 	va_end(ap);
 	ret = sqlite3_exec(db, sql, 0, 0, &errMsg);
-	if( ret != SQLITE_OK )
+	if (ret != SQLITE_OK)
 	{
 		DPRINTF(E_ERROR, L_DB_SQL, "SQL ERROR %d [%s]\n%s\n", ret, errMsg, sql);
 		if (errMsg)
@@ -48,14 +48,15 @@ sql_exec(sqlite3 *db, const char *fmt, ...)
 }
 
 int
-sql_get_table(sqlite3 *db, const char *sql, char ***pazResult, int *pnRow, int *pnColumn)
+sql_get_table(sqlite3 *db, const char *sql, char ***pazResult, int *pnRow,
+			  int *pnColumn)
 {
 	int ret;
 	char *errMsg = NULL;
-	//DPRINTF(E_DEBUG, L_DB_SQL, "SQL: %s\n", sql);
-	
+	// DPRINTF(E_DEBUG, L_DB_SQL, "SQL: %s\n", sql);
+
 	ret = sqlite3_get_table(db, sql, pazResult, pnRow, pnColumn, &errMsg);
-	if( ret != SQLITE_OK )
+	if (ret != SQLITE_OK)
 	{
 		DPRINTF(E_ERROR, L_DB_SQL, "SQL ERROR %d [%s]\n%s\n", ret, errMsg, sql);
 		if (errMsg)
@@ -65,70 +66,71 @@ sql_get_table(sqlite3 *db, const char *sql, char ***pazResult, int *pnRow, int *
 	return ret;
 }
 
-#define sql_get_field(type, column_get_fn) \
-		va_list		ap;\
-		int		counter, result;\
-		char		*sql;\
-		type		ret;\
-		sqlite3_stmt	*stmt;\
-		\
-		va_start(ap, fmt);\
-		sql = sqlite3_vmprintf(fmt, ap);\
-		va_end(ap);\
-\
-		/*DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql); */ \
-\
-		switch (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL))\
-		{\
-			case SQLITE_OK:\
-				break;\
-			default:\
-				DPRINTF(E_ERROR, L_DB_SQL, "prepare failed: %s\n%s\n", sqlite3_errmsg(db), sql);\
-				sqlite3_free(sql);\
-				return -1;\
-		}\
-\
-		for (counter = 0;\
-		     ((result = sqlite3_step(stmt)) == SQLITE_BUSY || result == SQLITE_LOCKED) && counter < 2;\
-		     counter++) {\
-			/* While SQLITE_BUSY has a built in timeout,\
-			 * SQLITE_LOCKED does not, so sleep */\
-			if (result == SQLITE_LOCKED)\
-				sleep(1);\
-		}\
-\
-		switch (result)\
-		{\
-			case SQLITE_DONE:\
-				/* no rows returned */\
-				ret = 0;\
-				break;\
-			case SQLITE_ROW:\
-				if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)\
-				{\
-					ret = 0;\
-					break;\
-				}\
-				ret = column_get_fn(stmt, 0);\
-				break;\
-			default:\
-				DPRINTF(E_WARN, L_DB_SQL, "%s: step failed: %s\n%s\n", __func__, sqlite3_errmsg(db), sql);\
-				ret = -1;\
-				break;\
-		}\
-		sqlite3_free(sql);\
-		sqlite3_finalize(stmt);\
-\
-		return ret;
+#define sql_get_field(type, column_get_fn)                                     \
+	va_list ap;                                                                \
+	int counter, result;                                                       \
+	char *sql;                                                                 \
+	type ret;                                                                  \
+	sqlite3_stmt *stmt;                                                        \
+                                                                               \
+	va_start(ap, fmt);                                                         \
+	sql = sqlite3_vmprintf(fmt, ap);                                           \
+	va_end(ap);                                                                \
+                                                                               \
+	/*DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql); */                         \
+                                                                               \
+	switch (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL))                      \
+	{                                                                          \
+	case SQLITE_OK:                                                            \
+		break;                                                                 \
+	default:                                                                   \
+		DPRINTF(E_ERROR, L_DB_SQL, "prepare failed: %s\n%s\n",                 \
+				sqlite3_errmsg(db), sql);                                      \
+		sqlite3_free(sql);                                                     \
+		return -1;                                                             \
+	}                                                                          \
+                                                                               \
+	for (counter = 0; ((result = sqlite3_step(stmt)) == SQLITE_BUSY ||         \
+					   result == SQLITE_LOCKED) &&                             \
+					  counter < 2;                                             \
+		 counter++)                                                            \
+	{                                                                          \
+		/* While SQLITE_BUSY has a built in timeout,                           \
+		 * SQLITE_LOCKED does not, so sleep */                                 \
+		if (result == SQLITE_LOCKED)                                           \
+			sleep(1);                                                          \
+	}                                                                          \
+                                                                               \
+	switch (result)                                                            \
+	{                                                                          \
+	case SQLITE_DONE:                                                          \
+		/* no rows returned */                                                 \
+		ret = 0;                                                               \
+		break;                                                                 \
+	case SQLITE_ROW:                                                           \
+		if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)                       \
+		{                                                                      \
+			ret = 0;                                                           \
+			break;                                                             \
+		}                                                                      \
+		ret = column_get_fn(stmt, 0);                                          \
+		break;                                                                 \
+	default:                                                                   \
+		DPRINTF(E_WARN, L_DB_SQL, "%s: step failed: %s\n%s\n", __func__,       \
+				sqlite3_errmsg(db), sql);                                      \
+		ret = -1;                                                              \
+		break;                                                                 \
+	}                                                                          \
+	sqlite3_free(sql);                                                         \
+	sqlite3_finalize(stmt);                                                    \
+                                                                               \
+	return ret;
 
 int
-sql_get_int_field(sqlite3 *db, const char *fmt, ...)
-{
-	sql_get_field(int, sqlite3_column_int)
-}
+sql_get_int_field(sqlite3 *db, const char *fmt,
+				  ...){sql_get_field(int, sqlite3_column_int)}
 
-int64_t
-sql_get_int64_field(sqlite3 *db, const char *fmt, ...)
+int64_t sql_get_int64_field(sqlite3 *db, const char *fmt, ...)
 {
 	sql_get_field(int64_t, sqlite3_column_int64)
 }
@@ -136,11 +138,11 @@ sql_get_int64_field(sqlite3 *db, const char *fmt, ...)
 char *
 sql_get_text_field(sqlite3 *db, const char *fmt, ...)
 {
-	va_list         ap;
-	int             counter, result, len;
-	char            *sql;
-	char            *str;
-	sqlite3_stmt    *stmt;
+	va_list ap;
+	int counter, result, len;
+	char *sql;
+	char *str;
+	sqlite3_stmt *stmt;
 
 	if (db == NULL)
 	{
@@ -152,22 +154,24 @@ sql_get_text_field(sqlite3 *db, const char *fmt, ...)
 	sql = sqlite3_vmprintf(fmt, ap);
 	va_end(ap);
 
-	//DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql);
+	// DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql);
 
 	switch (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL))
 	{
-		case SQLITE_OK:
-			break;
-		default:
-			DPRINTF(E_ERROR, L_DB_SQL, "prepare failed: %s\n%s\n", sqlite3_errmsg(db), sql);
-			sqlite3_free(sql);
-			return NULL;
+	case SQLITE_OK:
+		break;
+	default:
+		DPRINTF(E_ERROR, L_DB_SQL, "prepare failed: %s\n%s\n",
+				sqlite3_errmsg(db), sql);
+		sqlite3_free(sql);
+		return NULL;
 	}
 	sqlite3_free(sql);
 
-	for (counter = 0;
-	     ((result = sqlite3_step(stmt)) == SQLITE_BUSY || result == SQLITE_LOCKED) && counter < 2;
-	     counter++)
+	for (counter = 0; ((result = sqlite3_step(stmt)) == SQLITE_BUSY ||
+					   result == SQLITE_LOCKED) &&
+					  counter < 2;
+		 counter++)
 	{
 		/* While SQLITE_BUSY has a built in timeout,
 		 * SQLITE_LOCKED does not, so sleep */
@@ -177,32 +181,32 @@ sql_get_text_field(sqlite3 *db, const char *fmt, ...)
 
 	switch (result)
 	{
-		case SQLITE_DONE:
-			/* no rows returned */
+	case SQLITE_DONE:
+		/* no rows returned */
+		str = NULL;
+		break;
+
+	case SQLITE_ROW:
+		if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)
+		{
 			str = NULL;
 			break;
+		}
 
-		case SQLITE_ROW:
-			if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)
-			{
-				str = NULL;
-				break;
-			}
-
-			len = sqlite3_column_bytes(stmt, 0);
-			if ((str = sqlite3_malloc(len + 1)) == NULL)
-			{
-				DPRINTF(E_ERROR, L_DB_SQL, "malloc failed\n");
-				break;
-			}
-
-			strncpy(str, (char *)sqlite3_column_text(stmt, 0), len + 1);
+		len = sqlite3_column_bytes(stmt, 0);
+		if ((str = sqlite3_malloc(len + 1)) == NULL)
+		{
+			DPRINTF(E_ERROR, L_DB_SQL, "malloc failed\n");
 			break;
+		}
 
-		default:
-			DPRINTF(E_WARN, L_DB_SQL, "SQL step failed: %s\n", sqlite3_errmsg(db));
-			str = NULL;
-			break;
+		strncpy(str, (char *)sqlite3_column_text(stmt, 0), len + 1);
+		break;
+
+	default:
+		DPRINTF(E_WARN, L_DB_SQL, "SQL step failed: %s\n", sqlite3_errmsg(db));
+		str = NULL;
+		break;
 	}
 	sqlite3_finalize(stmt);
 
@@ -235,7 +239,8 @@ db_upgrade(sqlite3 *db)
 	if (db_vers < 11)
 	{
 		DPRINTF(E_WARN, L_DB_SQL, "Updating DB version to v%d\n", 11);
-		ret = sql_exec(db, "ALTER TABLE PLAYLISTS ADD TIMESTAMP INTEGER DEFAULT 1");
+		ret = sql_exec(db,
+					   "ALTER TABLE PLAYLISTS ADD TIMESTAMP INTEGER DEFAULT 1");
 		if (ret != SQLITE_OK)
 			return 10;
 	}

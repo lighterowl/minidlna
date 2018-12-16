@@ -19,7 +19,8 @@
 
 #include <sys/sendfile.h>
 
-int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
+int
+sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 {
 	return sendfile(sock, sendfd, offset, len);
 }
@@ -30,7 +31,8 @@ int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
+int
+sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 {
 	int ret;
 
@@ -46,7 +48,8 @@ int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
+int
+sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 {
 	int ret;
 	size_t nbytes = len;
@@ -61,7 +64,8 @@ int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 
 #include <errno.h>
 
-int sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
+int
+sys_sendfile(int sock, int sendfd, off_t *offset, off_t len)
 {
 	errno = EINVAL;
 	return -1;

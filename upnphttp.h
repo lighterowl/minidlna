@@ -56,7 +56,8 @@
 #include "config.h"
 
 /* server: HTTP header returned in all HTTP responses : */
-#define MINIDLNA_SERVER_STRING	OS_VERSION " DLNADOC/1.50 UPnP/1.0 " SERVER_NAME "/" MINIDLNA_VERSION
+#define MINIDLNA_SERVER_STRING                                                 \
+	OS_VERSION " DLNADOC/1.50 UPnP/1.0 " SERVER_NAME "/" MINIDLNA_VERSION
 
 /*
  states :
@@ -65,7 +66,8 @@
   ...
   >= 100 - to be deleted
 */
-enum httpCommands {
+enum httpCommands
+{
 	EUnknown = 0,
 	EGet,
 	EPost,
@@ -74,59 +76,60 @@ enum httpCommands {
 	EUnSubscribe
 };
 
-struct upnphttp {
+struct upnphttp
+{
 	struct event ev;
-	struct in_addr clientaddr;	/* client address */
+	struct in_addr clientaddr; /* client address */
 	int iface;
 	int state;
 	char HttpVer[16];
 	/* request */
-	char * req_buf;
+	char *req_buf;
 	int req_buflen;
 	int req_contentlen;
-	int req_contentoff;     /* header length */
+	int req_contentoff; /* header length */
 	enum httpCommands req_command;
-	struct client_cache_s * req_client;
-	const char * req_soapAction;
+	struct client_cache_s *req_client;
+	const char *req_soapAction;
 	int req_soapActionLen;
-	const char * req_Callback;	/* For SUBSCRIBE */
+	const char *req_Callback; /* For SUBSCRIBE */
 	int req_CallbackLen;
-	const char * req_NT;
+	const char *req_NT;
 	int req_NTLen;
 	int req_Timeout;
-	const char * req_SID;		/* For UNSUBSCRIBE */
+	const char *req_SID; /* For UNSUBSCRIBE */
 	int req_SIDLen;
 	off_t req_RangeStart;
 	off_t req_RangeEnd;
 	long int req_chunklen;
 	uint32_t reqflags;
 	/* response */
-	char * res_buf;
+	char *res_buf;
 	int res_buflen;
 	int res_buf_alloclen;
 	uint32_t respflags;
 	/*int res_contentlen;*/
-	/*int res_contentoff;*/		/* header length */
+	/*int res_contentoff;*/ /* header length */
 	LIST_ENTRY(upnphttp) entries;
 };
 
-#define FLAG_TIMEOUT            0x00000001
-#define FLAG_SID                0x00000002
-#define FLAG_RANGE              0x00000004
-#define FLAG_HOST               0x00000008
-#define FLAG_LANGUAGE           0x00000010
+#define FLAG_TIMEOUT 0x00000001
+#define FLAG_SID 0x00000002
+#define FLAG_RANGE 0x00000004
+#define FLAG_HOST 0x00000008
+#define FLAG_LANGUAGE 0x00000010
 
-#define FLAG_INVALID_REQ        0x00000040
-#define FLAG_HTML               0x00000080
+#define FLAG_INVALID_REQ 0x00000040
+#define FLAG_HTML 0x00000080
 
-#define FLAG_CHUNKED            0x00000100
-#define FLAG_TIMESEEK           0x00000200
-#define FLAG_REALTIMEINFO       0x00000400
-#define FLAG_PLAYSPEED          0x00000800
-#define FLAG_XFERSTREAMING      0x00001000
-#define FLAG_XFERINTERACTIVE    0x00002000
-#define FLAG_XFERBACKGROUND     0x00004000
-#define FLAG_CAPTION            0x00008000
+#define FLAG_CHUNKED 0x00000100
+#define FLAG_TIMESEEK 0x00000200
+#define FLAG_REALTIMEINFO 0x00000400
+#define FLAG_PLAYSPEED 0x00000800
+#define FLAG_XFERSTREAMING 0x00001000
+#define FLAG_XFERINTERACTIVE 0x00002000
+#define FLAG_XFERBACKGROUND 0x00004000
+#define FLAG_CAPTION 0x00008000
 
 #ifndef MSG_MORE
 #define MSG_MORE 0
@@ -148,11 +151,10 @@ Delete_upnphttp(struct upnphttp *);
  * build the header for the HTTP Response
  * also allocate the buffer for body data */
 void
-BuildHeader_upnphttp(struct upnphttp * h, int respcode,
-                     const char * respmsg,
-                     int bodylen);
+BuildHeader_upnphttp(struct upnphttp *h, int respcode, const char *respmsg,
+					 int bodylen);
 
-/* BuildResp_upnphttp() 
+/* BuildResp_upnphttp()
  * fill the res_buf buffer with the complete
  * HTTP 200 OK response from the body passed as argument */
 void
@@ -161,9 +163,8 @@ BuildResp_upnphttp(struct upnphttp *, const char *, int);
 /* BuildResp2_upnphttp()
  * same but with given response code/message */
 void
-BuildResp2_upnphttp(struct upnphttp * h, int respcode,
-                    const char * respmsg,
-                    const char * body, int bodylen);
+BuildResp2_upnphttp(struct upnphttp *h, int respcode, const char *respmsg,
+					const char *body, int bodylen);
 
 /* Error messages */
 void
@@ -176,4 +177,3 @@ void
 SendResp_upnphttp(struct upnphttp *);
 
 #endif
-

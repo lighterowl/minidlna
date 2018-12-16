@@ -35,44 +35,45 @@
 #include "utils.h"
 #include "upnpglobalvars.h"
 
-struct option * ary_options = NULL;
+struct option *ary_options = NULL;
 int num_options = 0;
 
-static const struct {
+static const struct
+{
 	enum upnpconfigoptions id;
-	const char * name;
+	const char *name;
 } optionids[] = {
-	{ UPNPIFNAME, "network_interface" },
-	{ UPNPPORT, "port" },
-	{ UPNPPRESENTATIONURL, "presentation_url" },
-	{ UPNPNOTIFY_INTERVAL, "notify_interval" },
-	{ UPNPUUID, "uuid"},
-	{ UPNPSERIAL, "serial"},
-	{ UPNPMODEL_NAME, "model_name"},
-	{ UPNPMODEL_NUMBER, "model_number"},
-	{ UPNPFRIENDLYNAME, "friendly_name"},
-	{ UPNPMEDIADIR, "media_dir"},
-	{ UPNPALBUMART_NAMES, "album_art_names"},
-	{ UPNPINOTIFY, "inotify" },
-	{ UPNPDBDIR, "db_dir" },
-	{ UPNPLOGDIR, "log_dir" },
-	{ UPNPLOGLEVEL, "log_level" },
-	{ UPNPMINISSDPDSOCKET, "minissdpdsocket"},
-	{ ENABLE_TIVO, "enable_tivo" },
-	{ ENABLE_DLNA_STRICT, "strict_dlna" },
-	{ ROOT_CONTAINER, "root_container" },
-	{ USER_ACCOUNT, "user" },
-	{ FORCE_SORT_CRITERIA, "force_sort_criteria" },
-	{ MAX_CONNECTIONS, "max_connections" },
-	{ MERGE_MEDIA_DIRS, "merge_media_dirs" },
-	{ WIDE_LINKS, "wide_links" },
-	{ TIVO_DISCOVERY, "tivo_discovery" },
-	{ ENABLE_SUBTITLES, "enable_subtitles" },
-	{ RESIZE_COVER_ART, "resize_covers" },
+	{UPNPIFNAME, "network_interface"},
+	{UPNPPORT, "port"},
+	{UPNPPRESENTATIONURL, "presentation_url"},
+	{UPNPNOTIFY_INTERVAL, "notify_interval"},
+	{UPNPUUID, "uuid"},
+	{UPNPSERIAL, "serial"},
+	{UPNPMODEL_NAME, "model_name"},
+	{UPNPMODEL_NUMBER, "model_number"},
+	{UPNPFRIENDLYNAME, "friendly_name"},
+	{UPNPMEDIADIR, "media_dir"},
+	{UPNPALBUMART_NAMES, "album_art_names"},
+	{UPNPINOTIFY, "inotify"},
+	{UPNPDBDIR, "db_dir"},
+	{UPNPLOGDIR, "log_dir"},
+	{UPNPLOGLEVEL, "log_level"},
+	{UPNPMINISSDPDSOCKET, "minissdpdsocket"},
+	{ENABLE_TIVO, "enable_tivo"},
+	{ENABLE_DLNA_STRICT, "strict_dlna"},
+	{ROOT_CONTAINER, "root_container"},
+	{USER_ACCOUNT, "user"},
+	{FORCE_SORT_CRITERIA, "force_sort_criteria"},
+	{MAX_CONNECTIONS, "max_connections"},
+	{MERGE_MEDIA_DIRS, "merge_media_dirs"},
+	{WIDE_LINKS, "wide_links"},
+	{TIVO_DISCOVERY, "tivo_discovery"},
+	{ENABLE_SUBTITLES, "enable_subtitles"},
+	{RESIZE_COVER_ART, "resize_covers"},
 };
 
 int
-readoptionsfile(const char * fname)
+readoptionsfile(const char *fname)
 {
 	FILE *hfile = NULL;
 	char buffer[1024];
@@ -84,7 +85,7 @@ readoptionsfile(const char * fname)
 	int i;
 	enum upnpconfigoptions id;
 
-	if(!fname || *fname == '\0')
+	if (!fname || *fname == '\0')
 		return -1;
 
 	memset(buffer, 0, sizeof(buffer));
@@ -93,18 +94,18 @@ readoptionsfile(const char * fname)
 	printf("Reading configuration from file %s\n", fname);
 #endif
 
-	if(!(hfile = fopen(fname, "r")))
+	if (!(hfile = fopen(fname, "r")))
 		return -1;
 
-	while(fgets(buffer, sizeof(buffer), hfile))
+	while (fgets(buffer, sizeof(buffer), hfile))
 	{
 		linenum++;
-		t = strchr(buffer, '\n'); 
-		if(t)
+		t = strchr(buffer, '\n');
+		if (t)
 		{
 			*t = '\0';
 			t--;
-			while((t >= buffer) && isspace(*t))
+			while ((t >= buffer) && isspace(*t))
 			{
 				*t = '\0';
 				t--;
@@ -113,73 +114,74 @@ readoptionsfile(const char * fname)
 
 		/* skip leading whitespaces */
 		name = buffer;
-		while(isspace(*name))
+		while (isspace(*name))
 			name++;
 
 		/* check for comments or empty lines */
-		if(name[0] == '#' || name[0] == '\0') continue;
+		if (name[0] == '#' || name[0] == '\0')
+			continue;
 
-		if(!(equals = strchr(name, '=')))
+		if (!(equals = strchr(name, '=')))
 		{
-			fprintf(stderr, "parsing error file %s line %d : %s\n",
-			        fname, linenum, name);
+			fprintf(stderr, "parsing error file %s line %d : %s\n", fname,
+					linenum, name);
 			continue;
 		}
 
 		/* remove ending whitespaces */
-		for(t=equals-1; t>name && isspace(*t); t--)
+		for (t = equals - 1; t > name && isspace(*t); t--)
 			*t = '\0';
 
 		*equals = '\0';
-		value = equals+1;
+		value = equals + 1;
 
 		/* skip leading whitespaces */
-		while(isspace(*value))
+		while (isspace(*value))
 			value++;
 
 		id = UPNP_INVALID;
-		for(i=0; i<sizeof(optionids)/sizeof(optionids[0]); i++)
+		for (i = 0; i < sizeof(optionids) / sizeof(optionids[0]); i++)
 		{
 			/*printf("%2d %2d %s %s\n", i, optionids[i].id, name,
-			       optionids[i].name); */
+				   optionids[i].name); */
 
-			if(0 == strcmp(name, optionids[i].name))
+			if (0 == strcmp(name, optionids[i].name))
 			{
 				id = optionids[i].id;
 				break;
 			}
 		}
 
-		if(id == UPNP_INVALID)
+		if (id == UPNP_INVALID)
 		{
 			if (strcmp(name, "include") == 0)
 				readoptionsfile(value);
 			else
 				fprintf(stderr, "parsing error file %s line %d : %s=%s\n",
-				        fname, linenum, name, value);
+						fname, linenum, name, value);
 		}
 		else
 		{
 			num_options++;
 			t = realloc(ary_options, num_options * sizeof(struct option));
-			if(!t)
+			if (!t)
 			{
-				fprintf(stderr, "memory allocation error: %s=%s\n",
-					name, value);
+				fprintf(stderr, "memory allocation error: %s=%s\n", name,
+						value);
 				num_options--;
 				continue;
 			}
 			else
 				ary_options = (struct option *)t;
 
-			ary_options[num_options-1].id = id;
-			strncpyt(ary_options[num_options-1].value, value, MAX_OPTION_VALUE_LEN);
+			ary_options[num_options - 1].id = id;
+			strncpyt(ary_options[num_options - 1].value, value,
+					 MAX_OPTION_VALUE_LEN);
 		}
-
 	}
-	
+
 	fclose(hfile);
-	
+
 	return 0;
 }
 
@@ -188,7 +190,7 @@ freeoptions(void)
 {
 	struct media_dir_s *media_path, *last_path;
 	struct album_art_name_s *art_names, *last_name;
-	
+
 	media_path = media_dirs;
 	while (media_path)
 	{
@@ -207,11 +209,10 @@ freeoptions(void)
 		free(last_name);
 	}
 
-	if(ary_options)
+	if (ary_options)
 	{
 		free(ary_options);
 		ary_options = NULL;
 		num_options = 0;
 	}
 }
-

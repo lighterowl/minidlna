@@ -31,24 +31,24 @@
 char *
 decodeString(char *string, int inplace)
 {
-	if( !string )
+	if (!string)
 		return NULL;
-	int alloc = (int)strlen(string)+1;
+	int alloc = (int)strlen(string) + 1;
 	char *ns = NULL;
 	unsigned char in;
-	int strindex=0;
+	int strindex = 0;
 	long hex;
 
-	if( !inplace )
+	if (!inplace)
 	{
-		if( !(ns = malloc(alloc)) )
+		if (!(ns = malloc(alloc)))
 			return NULL;
 	}
 
-	while(--alloc > 0)
+	while (--alloc > 0)
 	{
 		in = *string;
-		if((in == '%') && isxdigit(string[1]) && isxdigit(string[2]))
+		if ((in == '%') && isxdigit(string[1]) && isxdigit(string[2]))
 		{
 			/* this is two hexadecimal digits following a '%' */
 			char hexstr[3];
@@ -59,23 +59,24 @@ decodeString(char *string, int inplace)
 
 			hex = strtol(hexstr, &ptr, 16);
 
-			in = (unsigned char)hex; /* this long is never bigger than 255 anyway */
-			if( inplace )
+			in = (unsigned char)
+				hex; /* this long is never bigger than 255 anyway */
+			if (inplace)
 			{
 				*string = in;
-				memmove(string+1, string+3, alloc-2);
+				memmove(string + 1, string + 3, alloc - 2);
 			}
 			else
 			{
-				string+=2;
+				string += 2;
 			}
-			alloc-=2;
+			alloc -= 2;
 		}
-		if( !inplace )
+		if (!inplace)
 			ns[strindex++] = in;
 		string++;
 	}
-	if( inplace )
+	if (inplace)
 	{
 		free(ns);
 		return string;
@@ -87,13 +88,14 @@ decodeString(char *string, int inplace)
 	}
 }
 
-/* These next functions implement a repeatable random function with a user-provided seed */
+/* These next functions implement a repeatable random function with a
+ * user-provided seed */
 static int
 seedRandomByte(uint32_t seed)
 {
 	unsigned char t;
 
-	if( !sqlite3Prng.isInit )
+	if (!sqlite3Prng.isInit)
 	{
 		int i;
 		char k[256];
@@ -101,9 +103,9 @@ seedRandomByte(uint32_t seed)
 		sqlite3Prng.i = 0;
 		memset(&k, '\0', sizeof(k));
 		memcpy(&k, &seed, 4);
-		for(i=0; i<256; i++)
+		for (i = 0; i < 256; i++)
 			sqlite3Prng.s[i] = i;
-		for(i=0; i<256; i++)
+		for (i = 0; i < 256; i++)
 		{
 			sqlite3Prng.j += sqlite3Prng.s[i] + k[i];
 			t = sqlite3Prng.s[sqlite3Prng.j];
@@ -128,7 +130,7 @@ seedRandomness(int n, void *pbuf, uint32_t seed)
 {
 	unsigned char *zbuf = pbuf;
 
-	while( n-- )
+	while (n--)
 		*(zbuf++) = seedRandomByte(seed);
 }
 
@@ -137,7 +139,7 @@ TiVoRandomSeedFunc(sqlite3_context *context, int argc, sqlite3_value **argv)
 {
 	int64_t r, seed;
 
-	if( argc != 1 || sqlite3_value_type(argv[0]) != SQLITE_INTEGER )
+	if (argc != 1 || sqlite3_value_type(argv[0]) != SQLITE_INTEGER)
 		return;
 	seed = sqlite3_value_int64(argv[0]);
 	seedRandomness(sizeof(r), &r, seed);
@@ -148,14 +150,14 @@ int
 is_tivo_file(const char *path)
 {
 	unsigned char buf[5];
-	unsigned char hdr[5] = { 'T','i','V','o','\0' };
+	unsigned char hdr[5] = {'T', 'i', 'V', 'o', '\0'};
 	int fd;
 
 	/* read file header */
 	fd = open(path, O_RDONLY);
-	if( fd < 0 )
+	if (fd < 0)
 		return 0;
-	if( read(fd, buf, 5) < 5 )
+	if (read(fd, buf, 5) < 5)
 		buf[0] = 'X';
 	close(fd);
 

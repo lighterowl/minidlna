@@ -26,10 +26,11 @@
 #ifdef TIVO_SUPPORT
 #include <sqlite3.h>
 
-struct sqlite3PrngType {
-  unsigned char isInit;          /* True if initialized */
-  unsigned char i, j;            /* State variables */
-  unsigned char s[256];          /* State variables */
+struct sqlite3PrngType
+{
+	unsigned char isInit; /* True if initialized */
+	unsigned char i, j;   /* State variables */
+	unsigned char s[256]; /* State variables */
 } sqlite3Prng;
 
 char *

@@ -24,8 +24,10 @@
  * This file is derived from mt-daap project.
  */
 
-typedef struct _ogg_stream_processor {
-	void (*process_page)(struct _ogg_stream_processor *, ogg_page *, struct song_metadata *);
+typedef struct _ogg_stream_processor
+{
+	void (*process_page)(struct _ogg_stream_processor *, ogg_page *,
+						 struct song_metadata *);
 	void (*process_end)(struct _ogg_stream_processor *, struct song_metadata *);
 	int isillegal;
 	int constraint_violated;
@@ -45,7 +47,8 @@ typedef struct _ogg_stream_processor {
 	void *data;
 } ogg_stream_processor;
 
-typedef struct {
+typedef struct
+{
 	ogg_stream_processor *streams;
 	int allocated;
 	int used;
@@ -53,7 +56,8 @@ typedef struct {
 	int in_headers;
 } ogg_stream_set;
 
-typedef struct {
+typedef struct
+{
 	vorbis_info vi;
 	vorbis_comment vc;
 
@@ -64,8 +68,8 @@ typedef struct {
 	int doneheaders;
 } ogg_misc_vorbis_info;
 
-#define CONSTRAINT_PAGE_AFTER_EOS   1
-#define CONSTRAINT_MUXING_VIOLATED  2
+#define CONSTRAINT_PAGE_AFTER_EOS 1
+#define CONSTRAINT_MUXING_VIOLATED 2
 
 static ogg_stream_set *
 _ogg_create_stream_set(void)
@@ -81,43 +85,50 @@ _ogg_create_stream_set(void)
 
 static void
 _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
-		    struct song_metadata *psong)
+					struct song_metadata *psong)
 {
 	ogg_packet packet;
 	ogg_misc_vorbis_info *inf = stream->data;
 	int i, header = 0;
 
 	ogg_stream_pagein(&stream->os, page);
-	if(inf->doneheaders < 3)
+	if (inf->doneheaders < 3)
 		header = 1;
 
-	while(ogg_stream_packetout(&stream->os, &packet) > 0)
+	while (ogg_stream_packetout(&stream->os, &packet) > 0)
 	{
-		if(inf->doneheaders < 3)
+		if (inf->doneheaders < 3)
 		{
-			if(vorbis_synthesis_headerin(&inf->vi, &inf->vc, &packet) < 0)
+			if (vorbis_synthesis_headerin(&inf->vi, &inf->vc, &packet) < 0)
 			{
-				DPRINTF(E_WARN, L_SCANNER, "Could not decode vorbis header "
-					"packet - invalid vorbis stream (%d)\n", stream->num);
+				DPRINTF(E_WARN, L_SCANNER,
+						"Could not decode vorbis header "
+						"packet - invalid vorbis stream (%d)\n",
+						stream->num);
 				continue;
 			}
 			inf->doneheaders++;
-			if(inf->doneheaders == 3)
+			if (inf->doneheaders == 3)
 			{
-				if(ogg_page_granulepos(page) != 0 || ogg_stream_packetpeek(&stream->os, NULL) == 1)
-					DPRINTF(E_WARN, L_SCANNER, "No header in vorbis stream %d\n", stream->num);
-				DPRINTF(E_MAXDEBUG, L_SCANNER, "Vorbis headers parsed for stream %d, "
-					"information follows...\n", stream->num);
-				DPRINTF(E_MAXDEBUG, L_SCANNER, "Channels: %d\n", inf->vi.channels);
+				if (ogg_page_granulepos(page) != 0 ||
+					ogg_stream_packetpeek(&stream->os, NULL) == 1)
+					DPRINTF(E_WARN, L_SCANNER,
+							"No header in vorbis stream %d\n", stream->num);
+				DPRINTF(E_MAXDEBUG, L_SCANNER,
+						"Vorbis headers parsed for stream %d, "
+						"information follows...\n",
+						stream->num);
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Channels: %d\n",
+						inf->vi.channels);
 				DPRINTF(E_MAXDEBUG, L_SCANNER, "Rate: %ld\n\n", inf->vi.rate);
 
 				psong->samplerate = inf->vi.rate;
 				psong->channels = inf->vi.channels;
 
-				if(inf->vi.bitrate_nominal > 0)
+				if (inf->vi.bitrate_nominal > 0)
 				{
 					DPRINTF(E_MAXDEBUG, L_SCANNER, "Nominal bitrate: %f kb/s\n",
-						(double)inf->vi.bitrate_nominal / 1000.0);
+							(double)inf->vi.bitrate_nominal / 1000.0);
 					psong->bitrate = inf->vi.bitrate_nominal / 1000;
 				}
 				else
@@ -130,29 +141,34 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 					upper_rate = 0;
 					lower_rate = 0;
 
-					if(inf->vi.bitrate_upper > 0)
+					if (inf->vi.bitrate_upper > 0)
 					{
-						DPRINTF(E_MAXDEBUG, L_SCANNER, "Upper bitrate: %f kb/s\n",
-							(double)inf->vi.bitrate_upper / 1000.0);
+						DPRINTF(E_MAXDEBUG, L_SCANNER,
+								"Upper bitrate: %f kb/s\n",
+								(double)inf->vi.bitrate_upper / 1000.0);
 						upper_rate = inf->vi.bitrate_upper;
 					}
 					else
 					{
-						DPRINTF(E_MAXDEBUG, L_SCANNER, "Upper bitrate not set\n");
+						DPRINTF(E_MAXDEBUG, L_SCANNER,
+								"Upper bitrate not set\n");
 					}
 
-					if(inf->vi.bitrate_lower > 0)
+					if (inf->vi.bitrate_lower > 0)
 					{
-						DPRINTF(E_MAXDEBUG, L_SCANNER, "Lower bitrate: %f kb/s\n",
-							(double)inf->vi.bitrate_lower / 1000.0);
-						lower_rate = inf->vi.bitrate_lower;;
+						DPRINTF(E_MAXDEBUG, L_SCANNER,
+								"Lower bitrate: %f kb/s\n",
+								(double)inf->vi.bitrate_lower / 1000.0);
+						lower_rate = inf->vi.bitrate_lower;
+						;
 					}
 					else
 					{
-						DPRINTF(E_MAXDEBUG, L_SCANNER, "Lower bitrate not set\n");
+						DPRINTF(E_MAXDEBUG, L_SCANNER,
+								"Lower bitrate not set\n");
 					}
 
-					if(upper_rate && lower_rate)
+					if (upper_rate && lower_rate)
 					{
 						psong->bitrate = (upper_rate + lower_rate) / 2;
 					}
@@ -162,22 +178,23 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 					}
 				}
 
-				if(inf->vc.comments > 0)
+				if (inf->vc.comments > 0)
 					DPRINTF(E_MAXDEBUG, L_SCANNER,
-						"User comments section follows...\n");
+							"User comments section follows...\n");
 
-				for(i = 0; i < inf->vc.comments; i++)
+				for (i = 0; i < inf->vc.comments; i++)
 				{
-					vc_scan(psong, inf->vc.user_comments[i], inf->vc.comment_lengths[i]);
+					vc_scan(psong, inf->vc.user_comments[i],
+							inf->vc.comment_lengths[i]);
 				}
 			}
 		}
 	}
 
-	if(!header)
+	if (!header)
 	{
 		ogg_int64_t gp = ogg_page_granulepos(page);
-		if(gp > 0)
+		if (gp > 0)
 		{
 			inf->lastgranulepos = gp;
 		}
@@ -198,9 +215,9 @@ _ogg_vorbis_end(ogg_stream_processor *stream, struct song_metadata *psong)
 	time = (double)inf->lastgranulepos / inf->vi.rate;
 	bitrate = inf->bytes * 8 / time / 1000;
 
-	if(psong != NULL)
+	if (psong != NULL)
 	{
-		if(psong->bitrate <= 0)
+		if (psong->bitrate <= 0)
 		{
 			psong->bitrate = bitrate * 1000;
 		}
@@ -214,13 +231,15 @@ _ogg_vorbis_end(ogg_stream_processor *stream, struct song_metadata *psong)
 }
 
 static void
-_ogg_process_null(ogg_stream_processor *stream, ogg_page *page, struct song_metadata *psong)
+_ogg_process_null(ogg_stream_processor *stream, ogg_page *page,
+				  struct song_metadata *psong)
 {
 	// invalid stream
 }
 
 static void
-_ogg_process_other(ogg_stream_processor *stream, ogg_page *page, struct song_metadata *psong)
+_ogg_process_other(ogg_stream_processor *stream, ogg_page *page,
+				   struct song_metadata *psong)
 {
 	ogg_stream_pagein(&stream->os, page);
 }
@@ -230,12 +249,12 @@ _ogg_free_stream_set(ogg_stream_set *set)
 {
 	int i;
 
-	for(i = 0; i < set->used; i++)
+	for (i = 0; i < set->used; i++)
 	{
-		if(!set->streams[i].end)
+		if (!set->streams[i].end)
 		{
 			// no EOS
-			if(set->streams[i].process_end)
+			if (set->streams[i].process_end)
 				set->streams[i].process_end(&set->streams[i], NULL);
 		}
 		ogg_stream_clear(&set->streams[i].os);
@@ -251,9 +270,9 @@ _ogg_streams_open(ogg_stream_set *set)
 	int i;
 	int res = 0;
 
-	for(i = 0; i < set->used; i++)
+	for (i = 0; i < set->used; i++)
 	{
-		if(!set->streams[i].end)
+		if (!set->streams[i].end)
 			res++;
 	}
 
@@ -271,7 +290,7 @@ _ogg_null_start(ogg_stream_processor *stream)
 static void
 _ogg_other_start(ogg_stream_processor *stream, char *type)
 {
-	if(type)
+	if (type)
 		stream->type = type;
 	else
 		stream->type = "unknown";
@@ -305,15 +324,15 @@ _ogg_find_stream_processor(ogg_stream_set *set, ogg_page *page)
 	int constraint = 0;
 	ogg_stream_processor *stream;
 
-	for(i = 0; i < set->used; i++)
+	for (i = 0; i < set->used; i++)
 	{
-		if(serial == set->streams[i].serial)
+		if (serial == set->streams[i].serial)
 		{
 			stream = &(set->streams[i]);
 
 			set->in_headers = 0;
 
-			if(stream->end)
+			if (stream->end)
 			{
 				stream->isillegal = 1;
 				stream->constraint_violated = CONSTRAINT_PAGE_AFTER_EOS;
@@ -327,7 +346,7 @@ _ogg_find_stream_processor(ogg_stream_set *set, ogg_page *page)
 			return stream;
 		}
 	}
-	if(_ogg_streams_open(set) && !set->in_headers)
+	if (_ogg_streams_open(set) && !set->in_headers)
 	{
 		constraint = CONSTRAINT_MUXING_VIOLATED;
 		invalid = 1;
@@ -335,16 +354,17 @@ _ogg_find_stream_processor(ogg_stream_set *set, ogg_page *page)
 
 	set->in_headers = 1;
 
-	if(set->allocated < set->used)
+	if (set->allocated < set->used)
 		stream = &set->streams[set->used];
 	else
 	{
 		set->allocated += 5;
-		set->streams = realloc(set->streams, sizeof(ogg_stream_processor) * set->allocated);
+		set->streams = realloc(set->streams,
+							   sizeof(ogg_stream_processor) * set->allocated);
 		stream = &set->streams[set->used];
 	}
 	set->used++;
-	stream->num = set->used;                // count from 1
+	stream->num = set->used; // count from 1
 
 	stream->isnew = 1;
 	stream->isillegal = invalid;
@@ -357,23 +377,28 @@ _ogg_find_stream_processor(ogg_stream_set *set, ogg_page *page)
 		ogg_stream_init(&stream->os, serial);
 		ogg_stream_pagein(&stream->os, page);
 		res = ogg_stream_packetout(&stream->os, &packet);
-		if(res <= 0)
+		if (res <= 0)
 		{
-			DPRINTF(E_WARN, L_SCANNER, "Invalid header page, no packet found\n");
+			DPRINTF(E_WARN, L_SCANNER,
+					"Invalid header page, no packet found\n");
 			_ogg_null_start(stream);
 		}
-		else if(packet.bytes >= 7 && memcmp(packet.packet, "\001vorbis", 7) == 0)
+		else if (packet.bytes >= 7 &&
+				 memcmp(packet.packet, "\001vorbis", 7) == 0)
 			_ogg_vorbis_start(stream);
-		else if(packet.bytes >= 8 && memcmp(packet.packet, "OggMIDI\0", 8) == 0)
+		else if (packet.bytes >= 8 &&
+				 memcmp(packet.packet, "OggMIDI\0", 8) == 0)
 			_ogg_other_start(stream, "MIDI");
 		else
 			_ogg_other_start(stream, NULL);
 
 		res = ogg_stream_packetout(&stream->os, &packet);
-		if(res > 0)
+		if (res > 0)
 		{
-			DPRINTF(E_WARN, L_SCANNER, "Invalid header page in stream %d, "
-				"contains multiple packets\n", stream->num);
+			DPRINTF(E_WARN, L_SCANNER,
+					"Invalid header page in stream %d, "
+					"contains multiple packets\n",
+					stream->num);
 		}
 
 		/* re-init, ready for processing */
@@ -390,21 +415,23 @@ _ogg_find_stream_processor(ogg_stream_set *set, ogg_page *page)
 
 static int
 _ogg_get_next_page(FILE *f, ogg_sync_state *sync, ogg_page *page,
-		   ogg_int64_t *written)
+				   ogg_int64_t *written)
 {
 	int ret;
 	char *buffer;
 	int bytes;
 
-	while((ret = ogg_sync_pageout(sync, page)) <= 0)
+	while ((ret = ogg_sync_pageout(sync, page)) <= 0)
 	{
-		if(ret < 0)
-			DPRINTF(E_WARN, L_SCANNER, "Hole in data found at approximate offset %lld bytes. Corrupted ogg.\n",
-				(long long)*written);
+		if (ret < 0)
+			DPRINTF(E_WARN, L_SCANNER,
+					"Hole in data found at approximate offset %lld bytes. "
+					"Corrupted ogg.\n",
+					(long long)*written);
 
 		buffer = ogg_sync_buffer(sync, 4500); // chunk=4500
 		bytes = fread(buffer, 1, 4500, f);
-		if(bytes <= 0)
+		if (bytes <= 0)
 		{
 			ogg_sync_wrote(sync, 0);
 			return 0;
@@ -416,7 +443,6 @@ _ogg_get_next_page(FILE *f, ogg_sync_state *sync, ogg_page *page,
 	return 1;
 }
 
-
 static int
 _get_oggfileinfo(char *filename, struct song_metadata *psong)
 {
@@ -427,10 +453,10 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 	int gotpage = 0;
 	ogg_int64_t written = 0;
 
-	if(!file)
+	if (!file)
 	{
-		DPRINTF(E_FATAL, L_SCANNER,
-			"Error opening input file \"%s\": %s\n", filename,  strerror(errno));
+		DPRINTF(E_FATAL, L_SCANNER, "Error opening input file \"%s\": %s\n",
+				filename, strerror(errno));
 		_ogg_free_stream_set(processors);
 		return -1;
 	}
@@ -439,80 +465,84 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 
 	ogg_sync_init(&sync);
 
-	while(_ogg_get_next_page(file, &sync, &page, &written))
+	while (_ogg_get_next_page(file, &sync, &page, &written))
 	{
 		ogg_stream_processor *p = _ogg_find_stream_processor(processors, &page);
 		gotpage = 1;
 
-		if(!p)
+		if (!p)
 		{
-			DPRINTF(E_FATAL, L_SCANNER, "Could not find a processor for stream, bailing\n");
+			DPRINTF(E_FATAL, L_SCANNER,
+					"Could not find a processor for stream, bailing\n");
 			_ogg_free_stream_set(processors);
 			fclose(file);
 			return -1;
 		}
 
-		if(p->isillegal && !p->shownillegal)
+		if (p->isillegal && !p->shownillegal)
 		{
 			char *constraint;
-			switch(p->constraint_violated)
+			switch (p->constraint_violated)
 			{
 			case CONSTRAINT_PAGE_AFTER_EOS:
 				constraint = "Page found for stream after EOS flag";
 				break;
 			case CONSTRAINT_MUXING_VIOLATED:
 				constraint = "Ogg muxing constraints violated, new "
-					     "stream before EOS of all previous streams";
+							 "stream before EOS of all previous streams";
 				break;
 			default:
 				constraint = "Error unknown.";
 			}
 
 			DPRINTF(E_WARN, L_SCANNER,
-				"Warning: illegally placed page(s) for logical stream %d\n"
-				"This indicates a corrupt ogg file: %s.\n",
-				p->num, constraint);
+					"Warning: illegally placed page(s) for logical stream %d\n"
+					"This indicates a corrupt ogg file: %s.\n",
+					p->num, constraint);
 			p->shownillegal = 1;
 
-			if(!p->isnew)
+			if (!p->isnew)
 				continue;
 		}
 
-		if(p->isnew)
+		if (p->isnew)
 		{
-			DPRINTF(E_MAXDEBUG, L_SCANNER, "New logical stream (#%d, serial: %08x): type %s\n",
-				p->num, p->serial, p->type);
-			if(!p->start)
+			DPRINTF(E_MAXDEBUG, L_SCANNER,
+					"New logical stream (#%d, serial: %08x): type %s\n", p->num,
+					p->serial, p->type);
+			if (!p->start)
 				DPRINTF(E_WARN, L_SCANNER,
-					"stream start flag not set on stream %d\n",
-					p->num);
+						"stream start flag not set on stream %d\n", p->num);
 		}
-		else if(p->start)
-			DPRINTF(E_WARN, L_SCANNER, "stream start flag found in mid-stream "
-				"on stream %d\n", p->num);
+		else if (p->start)
+			DPRINTF(E_WARN, L_SCANNER,
+					"stream start flag found in mid-stream "
+					"on stream %d\n",
+					p->num);
 
-		if(p->seqno++ != ogg_page_pageno(&page))
+		if (p->seqno++ != ogg_page_pageno(&page))
 		{
-			if(!p->lostseq)
+			if (!p->lostseq)
 				DPRINTF(E_WARN, L_SCANNER,
-					"sequence number gap in stream %d. Got page %ld "
-					"when expecting page %ld. Indicates missing data.\n",
-					p->num, ogg_page_pageno(&page), p->seqno - 1);
+						"sequence number gap in stream %d. Got page %ld "
+						"when expecting page %ld. Indicates missing data.\n",
+						p->num, ogg_page_pageno(&page), p->seqno - 1);
 			p->seqno = ogg_page_pageno(&page);
 			p->lostseq = 1;
 		}
 		else
 			p->lostseq = 0;
 
-		if(!p->isillegal)
+		if (!p->isillegal)
 		{
 			p->process_page(p, &page, psong);
 
-			if(p->end)
+			if (p->end)
 			{
-				if(p->process_end)
+				if (p->process_end)
 					p->process_end(p, psong);
-				DPRINTF(E_MAXDEBUG, L_SCANNER, "Logical stream %d ended\n", p->num);
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Logical stream %d ended\n",
+						p->num);
 				p->isillegal = 1;
 				p->constraint_violated = CONSTRAINT_PAGE_AFTER_EOS;
 			}
@@ -525,9 +555,10 @@ _get_oggfileinfo(char *filename, struct song_metadata *psong)
 
 	fclose(file);
 
-	if(!gotpage)
+	if (!gotpage)
 	{
-		DPRINTF(E_ERROR, L_SCANNER, "No ogg data found in file \"%s\".\n", filename);
+		DPRINTF(E_ERROR, L_SCANNER, "No ogg data found in file \"%s\".\n",
+				filename);
 		return -1;
 	}
 

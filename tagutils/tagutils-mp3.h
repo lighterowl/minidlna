@@ -20,18 +20,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+struct mp3_frameinfo
+{
+	int layer;		// 1,2,3
+	int bitrate;	// unit=kbps
+	int samplerate; // samp/sec
+	int stereo;		// flag
 
-struct mp3_frameinfo {
-	int layer;                              // 1,2,3
-	int bitrate;                            // unit=kbps
-	int samplerate;                         // samp/sec
-	int stereo;                             // flag
-
-	int frame_length;                       // bytes
-	int crc_protected;                      // flag
-	int samples_per_frame;                  // calculated
-	int padding;                            // flag
-	int xing_offset;                        // for xing hdr
+	int frame_length;	  // bytes
+	int crc_protected;	 // flag
+	int samples_per_frame; // calculated
+	int padding;		   // flag
+	int xing_offset;	   // for xing hdr
 	int number_of_frames;
 
 	int frame_offset;
@@ -42,22 +42,30 @@ struct mp3_frameinfo {
 	int is_valid;
 };
 
-static int _get_mp3tags(char *file, struct song_metadata *psong);
-static int _get_mp3fileinfo(char *file, struct song_metadata *psong);
-static int _decode_mp3_frame(unsigned char *frame, struct mp3_frameinfo *pfi);
+static int
+_get_mp3tags(char *file, struct song_metadata *psong);
+static int
+_get_mp3fileinfo(char *file, struct song_metadata *psong);
+static int
+_decode_mp3_frame(unsigned char *frame, struct mp3_frameinfo *pfi);
 
 // bitrate_tbl[layer_index][bitrate_index]
 static int bitrate_tbl[5][16] = {
-	{ 0, 32, 64,  96,  128, 160, 192, 224,	256,   288,  320, 352,	384,  416, 448, 0 },    /* MPEG1, L1 */
-	{ 0, 32, 48,  56,  64,	80,  96,  112,	128,   160,  192, 224,	256,  320, 384, 0 },    /* MPEG1, L2 */
-	{ 0, 32, 40,  48,  56,	64,  80,  96,	112,   128,  160, 192,	224,  256, 320, 0 },    /* MPEG1, L3 */
-	{ 0, 32, 48,  56,  64,	80,  96,  112,	128,   144,  160, 176,	192,  224, 256, 0 },    /* MPEG2/2.5, L1 */
-	{ 0, 8,  16,  24,  32,	40,  48,  56,	64,    80,   96,  112,	128,  144, 160, 0 } /* MPEG2/2.5, L2/L3 */
+	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,
+	 0}, /* MPEG1, L1 */
+	{0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384,
+	 0}, /* MPEG1, L2 */
+	{0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320,
+	 0}, /* MPEG1, L3 */
+	{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256,
+	 0}, /* MPEG2/2.5, L1 */
+	{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160,
+	 0} /* MPEG2/2.5, L2/L3 */
 };
 
 // sample_rate[sample_index][samplerate_index]
 static int sample_rate_tbl[3][4] = {
-	{ 44100, 48000, 32000, 0 },     /* MPEG 1 */
-	{ 22050, 24000, 16000, 0 },     /* MPEG 2 */
-	{ 11025, 12000, 8000,  0 } /* MPEG 2.5 */
+	{44100, 48000, 32000, 0}, /* MPEG 1 */
+	{22050, 24000, 16000, 0}, /* MPEG 2 */
+	{11025, 12000, 8000, 0}   /* MPEG 2.5 */
 };

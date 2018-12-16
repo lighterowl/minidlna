@@ -33,19 +33,19 @@
 
 /* Paths and other URLs in the minidlna http server */
 
-#define ROOTDESC_PATH 				"/rootDesc.xml"
+#define ROOTDESC_PATH "/rootDesc.xml"
 
-#define CONTENTDIRECTORY_PATH			"/ContentDir.xml"
-#define CONTENTDIRECTORY_CONTROLURL		"/ctl/ContentDir"
-#define CONTENTDIRECTORY_EVENTURL		"/evt/ContentDir"
+#define CONTENTDIRECTORY_PATH "/ContentDir.xml"
+#define CONTENTDIRECTORY_CONTROLURL "/ctl/ContentDir"
+#define CONTENTDIRECTORY_EVENTURL "/evt/ContentDir"
 
-#define CONNECTIONMGR_PATH			"/ConnectionMgr.xml"
-#define CONNECTIONMGR_CONTROLURL		"/ctl/ConnectionMgr"
-#define CONNECTIONMGR_EVENTURL			"/evt/ConnectionMgr"
+#define CONNECTIONMGR_PATH "/ConnectionMgr.xml"
+#define CONNECTIONMGR_CONTROLURL "/ctl/ConnectionMgr"
+#define CONNECTIONMGR_EVENTURL "/evt/ConnectionMgr"
 
-#define X_MS_MEDIARECEIVERREGISTRAR_PATH	"/X_MS_MediaReceiverRegistrar.xml"
-#define X_MS_MEDIARECEIVERREGISTRAR_CONTROLURL	"/ctl/X_MS_MediaReceiverRegistrar"
-#define X_MS_MEDIARECEIVERREGISTRAR_EVENTURL	"/evt/X_MS_MediaReceiverRegistrar"
+#define X_MS_MEDIARECEIVERREGISTRAR_PATH "/X_MS_MediaReceiverRegistrar.xml"
+#define X_MS_MEDIARECEIVERREGISTRAR_CONTROLURL                                 \
+	"/ctl/X_MS_MediaReceiverRegistrar"
+#define X_MS_MEDIARECEIVERREGISTRAR_EVENTURL "/evt/X_MS_MediaReceiverRegistrar"
 
 #endif
-

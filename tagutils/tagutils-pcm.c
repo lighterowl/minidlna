@@ -27,7 +27,7 @@ _get_pcmfileinfo(char *filename, struct song_metadata *psong)
 	struct stat file;
 	uint32_t sec, ms;
 
-	if( stat(filename, &file) != 0 )
+	if (stat(filename, &file) != 0)
 	{
 		DPRINTF(E_WARN, L_SCANNER, "Could not stat %s\n", filename);
 		return -1;
@@ -38,11 +38,13 @@ _get_pcmfileinfo(char *filename, struct song_metadata *psong)
 	psong->samplerate = 44100;
 	psong->channels = 2;
 	sec = psong->file_size / (psong->bitrate / 8);
-	ms = ((psong->file_size % (psong->bitrate / 8)) * 1000) / (psong->bitrate / 8);
+	ms = ((psong->file_size % (psong->bitrate / 8)) * 1000) /
+		 (psong->bitrate / 8);
 	psong->song_length = (sec * 1000) + ms;
 	psong->lossless = 1;
 
-	xasprintf(&(psong->mime), "audio/L16;rate=%d;channels=%d", psong->samplerate, psong->channels);
+	xasprintf(&(psong->mime), "audio/L16;rate=%d;channels=%d",
+			  psong->samplerate, psong->channels);
 	xasprintf(&(psong->dlna_pn), "LPCM");
 
 	return 0;

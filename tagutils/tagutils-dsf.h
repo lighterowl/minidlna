@@ -19,5 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-static int _get_dsffileinfo(char *file, struct song_metadata *psong);
-static int _get_dsftags(char *file, struct song_metadata *psong);
+static int
+_get_dsffileinfo(char *file, struct song_metadata *psong);
+static int
+_get_dsftags(char *file, struct song_metadata *psong);

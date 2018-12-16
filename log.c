@@ -32,29 +32,18 @@ static FILE *log_fp = NULL;
 static const int _default_log_level = E_WARN;
 int log_level[L_MAX];
 
-const char *facility_name[] = {
-	"general",
-	"artwork",
-	"database",
-	"inotify",
-	"scanner",
-	"metadata",
-	"http",
-	"ssdp",
-	"tivo",
-	0
-};
+const char *facility_name[] = {"general", "artwork",  "database", "inotify",
+							   "scanner", "metadata", "http",	 "ssdp",
+							   "tivo",	0};
 
-const char *level_name[] = {
-	"off",					// E_OFF
-	"fatal",				// E_FATAL
-	"error",				// E_ERROR
-	"warn",					// E_WARN
-	"info",					// E_INFO
-	"debug",				// E_DEBUG
-	"maxdebug",				// E_MAXDEBUG
-	0
-};
+const char *level_name[] = {"off",		// E_OFF
+							"fatal",	// E_FATAL
+							"error",	// E_ERROR
+							"warn",		// E_WARN
+							"info",		// E_INFO
+							"debug",	// E_DEBUG
+							"maxdebug", // E_MAXDEBUG
+							0};
 
 void
 log_close(void)
@@ -76,7 +65,8 @@ log_reopen(void)
 	}
 }
 
-int find_matching_name(const char* str, const char* names[])
+int
+find_matching_name(const char *str, const char *names[])
 {
 	const char *start;
 	int level, c;
@@ -86,7 +76,8 @@ int find_matching_name(const char* str, const char* names[])
 
 	start = strpbrk(str, ",=");
 	c = start ? start - str : strlen(str);
-	for (level = 0; names[level] != 0; level++) {
+	for (level = 0; names[level] != 0; level++)
+	{
 		if (!strncasecmp(names[level], str, c))
 			return level;
 	}
@@ -111,27 +102,37 @@ log_init(const char *debug)
 		int level, facility;
 
 		rhs = nlhs = debug;
-		while (rhs && (rhs = strchr(rhs, '='))) {
+		while (rhs && (rhs = strchr(rhs, '=')))
+		{
 			rhs++;
 			level = find_matching_name(rhs, level_name);
-			if (level == -1) {
-				DPRINTF(E_WARN, L_GENERAL, "unknown level in debug string: %s", debug);
+			if (level == -1)
+			{
+				DPRINTF(E_WARN, L_GENERAL, "unknown level in debug string: %s",
+						debug);
 				continue;
 			}
 
 			lhs = nlhs;
 			rhs = nlhs = strchr(rhs, ',');
-			do {
-				if (*lhs==',') lhs++;
+			do
+			{
+				if (*lhs == ',')
+					lhs++;
 				facility = find_matching_name(lhs, facility_name);
-				if (facility == -1) {
-					DPRINTF(E_WARN, L_GENERAL, "unknown debug facility in debug string: %s", debug);
-				} else {
+				if (facility == -1)
+				{
+					DPRINTF(E_WARN, L_GENERAL,
+							"unknown debug facility in debug string: %s",
+							debug);
+				}
+				else
+				{
 					log_level[facility] = level;
 				}
 
 				lhs = strpbrk(lhs, ",=");
-			} while (*lhs && *lhs==',');
+			} while (*lhs && *lhs == ',');
 		}
 	}
 
@@ -148,11 +149,12 @@ log_init(const char *debug)
 }
 
 void
-log_err(int level, enum _log_facility facility, char *fname, int lineno, char *fmt, ...)
+log_err(int level, enum _log_facility facility, char *fname, int lineno,
+		char *fmt, ...)
 {
 	va_list ap;
 
-	if (level && level>log_level[facility] && level>E_FATAL)
+	if (level && level > log_level[facility] && level > E_FATAL)
 		return;
 
 	if (!log_fp)
@@ -165,9 +167,9 @@ log_err(int level, enum _log_facility facility, char *fname, int lineno, char *f
 		struct tm *tm;
 		t = time(NULL);
 		tm = localtime(&t);
-		fprintf(log_fp, "[%04d/%02d/%02d %02d:%02d:%02d] ",
-		        tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-		        tm->tm_hour, tm->tm_min, tm->tm_sec);
+		fprintf(log_fp, "[%04d/%02d/%02d %02d:%02d:%02d] ", tm->tm_year + 1900,
+				tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
+				tm->tm_sec);
 	}
 
 	if (level)
@@ -186,7 +188,7 @@ log_err(int level, enum _log_facility facility, char *fname, int lineno, char *f
 
 	fflush(log_fp);
 
-	if (level==E_FATAL)
+	if (level == E_FATAL)
 		exit(-1);
 
 	return;

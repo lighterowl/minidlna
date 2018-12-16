@@ -44,10 +44,11 @@
 #include "sql.h"
 #include "utils.h"
 
-struct watch {
-	struct event	ev;
-	const char	*path;
-	bool		isdir;
+struct watch
+{
+	struct event ev;
+	const char *path;
+	bool isdir;
 };
 
 static void
@@ -57,76 +58,82 @@ dir_vnode_process(struct event *ev, u_int fflags)
 	const char *path;
 	char *sql, **result, tmp_path[PATH_MAX], *esc_name;
 	int rows, result_path_len, i;
-	DIR* d;
+	DIR *d;
 	struct dirent *entry;
 	bool found_flag;
 
 	wt = (struct watch *)ev->data;
 	path = wt->path;
 
-	if (fflags & NOTE_DELETE) {
+	if (fflags & NOTE_DELETE)
+	{
 		DPRINTF(E_DEBUG, L_INOTIFY, "Path [%s] deleted.\n", path);
 		close(ev->fd);
 		free(wt);
 		monitor_remove_directory(0, path);
 		return;
-	} else if ((fflags & (NOTE_WRITE | NOTE_LINK)) ==
-	    (NOTE_WRITE | NOTE_LINK)) {
+	}
+	else if ((fflags & (NOTE_WRITE | NOTE_LINK)) == (NOTE_WRITE | NOTE_LINK))
+	{
 
-		DPRINTF(E_DEBUG, L_INOTIFY, "Directory [%s] content updated\n",
-		    path);
-		sql = sqlite3_mprintf("SELECT PATH from DETAILS where "
-		    "(PATH > '%q/' and PATH <= '%q/%c') and SIZE IS NULL",
-		    path, path, 0xFF);
+		DPRINTF(E_DEBUG, L_INOTIFY, "Directory [%s] content updated\n", path);
+		sql = sqlite3_mprintf(
+			"SELECT PATH from DETAILS where "
+			"(PATH > '%q/' and PATH <= '%q/%c') and SIZE IS NULL",
+			path, path, 0xFF);
 		DPRINTF(E_DEBUG, L_INOTIFY, "SQL: %s\n", sql);
-		if ((sql_get_table(db, sql, &result, &rows, NULL) !=
-		    SQLITE_OK)) {
-			DPRINTF(E_WARN, L_INOTIFY,
-			    "Read state [%s]: Query failed\n", path);
+		if ((sql_get_table(db, sql, &result, &rows, NULL) != SQLITE_OK))
+		{
+			DPRINTF(E_WARN, L_INOTIFY, "Read state [%s]: Query failed\n", path);
 			goto err1;
 		}
 
-		for (i = 1; i <= rows; i++) {
-			DPRINTF(E_DEBUG, L_INOTIFY,
-			    "Indexed content: %s\n", result[i]);
+		for (i = 1; i <= rows; i++)
+		{
+			DPRINTF(E_DEBUG, L_INOTIFY, "Indexed content: %s\n", result[i]);
 			if (access(result[i], R_OK) == -1)
 				monitor_remove_directory(0, result[i]);
 		}
 
-		if ((d = opendir(path)) == NULL) {
-			DPRINTF(E_ERROR, L_INOTIFY, "Can't list [%s] (%s)\n",
-			    path, strerror(errno));
+		if ((d = opendir(path)) == NULL)
+		{
+			DPRINTF(E_ERROR, L_INOTIFY, "Can't list [%s] (%s)\n", path,
+					strerror(errno));
 			goto err2;
 		}
 
-		for (entry = readdir(d); entry != NULL; entry = readdir(d)) {
+		for (entry = readdir(d); entry != NULL; entry = readdir(d))
+		{
 			if ((entry->d_type != DT_DIR) ||
-			    (strcmp(entry->d_name, "..") == 0) ||
-			    (strcmp(entry->d_name, ".") == 0))
+				(strcmp(entry->d_name, "..") == 0) ||
+				(strcmp(entry->d_name, ".") == 0))
 				continue;
 
-			result_path_len = snprintf(tmp_path, PATH_MAX,
-			    "%s/%s", path, entry->d_name);
-			if (result_path_len >= PATH_MAX) {
-				DPRINTF(E_ERROR, L_INOTIFY,
-				    "File path too long for %s!",
-				    entry->d_name);
+			result_path_len =
+				snprintf(tmp_path, PATH_MAX, "%s/%s", path, entry->d_name);
+			if (result_path_len >= PATH_MAX)
+			{
+				DPRINTF(E_ERROR, L_INOTIFY, "File path too long for %s!",
+						entry->d_name);
 				continue;
 			}
 
 			DPRINTF(E_DEBUG, L_INOTIFY, "Walking %s\n", tmp_path);
 			found_flag = false;
-			for (i = 1; i <= rows; i++) {
-				if (strcmp(result[i], tmp_path) == 0) {
+			for (i = 1; i <= rows; i++)
+			{
+				if (strcmp(result[i], tmp_path) == 0)
+				{
 					found_flag = true;
 					break;
 				}
 			}
-			if (!found_flag) {
+			if (!found_flag)
+			{
 				esc_name = strdup(entry->d_name);
-				if (esc_name == NULL) {
-					DPRINTF(E_ERROR, L_INOTIFY,
-					    "strdup error");
+				if (esc_name == NULL)
+				{
+					DPRINTF(E_ERROR, L_INOTIFY, "strdup error");
 					continue;
 				}
 				esc_name = modifyString(esc_name, "&", "&amp;amp;", 0);
@@ -134,65 +141,70 @@ dir_vnode_process(struct event *ev, u_int fflags)
 				free(esc_name);
 			}
 		}
-	} else if (fflags & NOTE_WRITE) {
+	}
+	else if (fflags & NOTE_WRITE)
+	{
 
-		DPRINTF(E_DEBUG, L_INOTIFY, "File [%s] content updated\n",
-		    path);
-		sql = sqlite3_mprintf("SELECT PATH from DETAILS where "
-		    "(PATH > '%q/' and PATH <= '%q/%c') and SIZE IS NOT NULL",
-		    path, path, 0xFF);
-		if (sql_get_table(db, sql, &result, &rows, NULL) != SQLITE_OK) {
-			DPRINTF(E_WARN, L_INOTIFY,
-			    "Read state [%s]: Query failed\n", path);
+		DPRINTF(E_DEBUG, L_INOTIFY, "File [%s] content updated\n", path);
+		sql = sqlite3_mprintf(
+			"SELECT PATH from DETAILS where "
+			"(PATH > '%q/' and PATH <= '%q/%c') and SIZE IS NOT NULL",
+			path, path, 0xFF);
+		if (sql_get_table(db, sql, &result, &rows, NULL) != SQLITE_OK)
+		{
+			DPRINTF(E_WARN, L_INOTIFY, "Read state [%s]: Query failed\n", path);
 			goto err1;
 		}
 
-		for (i = 1; i <= rows; i++) {
-			DPRINTF(E_DEBUG, L_INOTIFY,
-			    "Indexed content: %s\n", result[i]);
+		for (i = 1; i <= rows; i++)
+		{
+			DPRINTF(E_DEBUG, L_INOTIFY, "Indexed content: %s\n", result[i]);
 			if (access(result[i], R_OK) == -1)
 				monitor_remove_file(result[i]);
 		}
 
-		if ((d = opendir(path)) == NULL) {
-			DPRINTF(E_ERROR, L_INOTIFY,
-			    "Can't list [%s] (%s)\n", path, strerror(errno));
+		if ((d = opendir(path)) == NULL)
+		{
+			DPRINTF(E_ERROR, L_INOTIFY, "Can't list [%s] (%s)\n", path,
+					strerror(errno));
 			goto err2;
 		}
 
-		for (entry = readdir(d); entry != NULL; entry = readdir(d)) {
-			if ((entry->d_type != DT_REG) &&
-			    (entry->d_type != DT_LNK))
+		for (entry = readdir(d); entry != NULL; entry = readdir(d))
+		{
+			if ((entry->d_type != DT_REG) && (entry->d_type != DT_LNK))
 				continue;
 
-			result_path_len = snprintf(tmp_path, PATH_MAX, "%s/%s",
-			    path, entry->d_name);
-			if (result_path_len >= PATH_MAX) {
-				DPRINTF(E_ERROR, L_INOTIFY,
-				    "File path too long for %s!",
-				    entry->d_name);
+			result_path_len =
+				snprintf(tmp_path, PATH_MAX, "%s/%s", path, entry->d_name);
+			if (result_path_len >= PATH_MAX)
+			{
+				DPRINTF(E_ERROR, L_INOTIFY, "File path too long for %s!",
+						entry->d_name);
 				continue;
 			}
 			DPRINTF(E_DEBUG, L_INOTIFY, "Walking %s\n", tmp_path);
 			found_flag = false;
 			for (i = 1; i <= rows; i++)
-				if (strcmp(result[i], tmp_path) == 0) {
+				if (strcmp(result[i], tmp_path) == 0)
+				{
 					found_flag = true;
 					break;
 				}
-			if (!found_flag ) {
+			if (!found_flag)
+			{
 				struct stat st;
 
-				if (stat(tmp_path, &st) != 0) {
-					DPRINTF(E_ERROR, L_INOTIFY,
-					    "stat(%s): %s\n", tmp_path,
-					    strerror(errno));
+				if (stat(tmp_path, &st) != 0)
+				{
+					DPRINTF(E_ERROR, L_INOTIFY, "stat(%s): %s\n", tmp_path,
+							strerror(errno));
 					continue;
 				}
 				esc_name = strdup(entry->d_name);
-				if (esc_name == NULL) {
-					DPRINTF(E_ERROR, L_INOTIFY,
-					    "strdup error");
+				if (esc_name == NULL)
+				{
+					DPRINTF(E_ERROR, L_INOTIFY, "strdup error");
 					continue;
 				}
 				esc_name = modifyString(esc_name, "&", "&amp;amp;", 0);
@@ -203,7 +215,8 @@ dir_vnode_process(struct event *ev, u_int fflags)
 				free(esc_name);
 			}
 		}
-	} else
+	}
+	else
 		return;
 
 	closedir(d);
@@ -221,18 +234,20 @@ add_watch(int fd __unused, const char *path)
 	int wd;
 
 	wd = open(path, O_RDONLY);
-	if (wd < 0) {
-		DPRINTF(E_ERROR, L_INOTIFY, "open(%s) [%s]\n",
-		    path, strerror(errno));
+	if (wd < 0)
+	{
+		DPRINTF(E_ERROR, L_INOTIFY, "open(%s) [%s]\n", path, strerror(errno));
 		return (errno);
 	}
 
-	if ((wt = malloc(sizeof(struct watch))) == NULL) {
+	if ((wt = malloc(sizeof(struct watch))) == NULL)
+	{
 		DPRINTF(E_ERROR, L_INOTIFY, "malloc() error\n");
 		close(wd);
 		return (ENOMEM);
 	}
-	if ((wt->path = strdup(path)) == NULL) {
+	if ((wt->path = strdup(path)) == NULL)
+	{
 		DPRINTF(E_ERROR, L_INOTIFY, "strdup() error\n");
 		close(wd);
 		free(wt);
@@ -266,10 +281,12 @@ kqueue_monitor_start()
 
 	DPRINTF(E_DEBUG, L_INOTIFY, "kqueue monitoring starting\n");
 	for (media_path = media_dirs; media_path != NULL;
-	    media_path = media_path->next)
+		 media_path = media_path->next)
 		add_watch(0, media_path->path);
-	sql_get_table(db, "SELECT PATH from DETAILS where MIME is NULL and PATH is not NULL", &result, &rows, NULL);
-	for (i = 1; i <= rows; i++ )
+	sql_get_table(
+		db, "SELECT PATH from DETAILS where MIME is NULL and PATH is not NULL",
+		&result, &rows, NULL);
+	for (i = 1; i <= rows; i++)
 		add_watch(0, result[i]);
 	sqlite3_free_table(result);
 }

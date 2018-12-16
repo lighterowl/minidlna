@@ -76,15 +76,15 @@ read_bootid_node(unsigned char *buf, size_t size)
 {
 	FILE *boot_id;
 
-	if(size != 6)
+	if (size != 6)
 		return -1;
 
 	boot_id = fopen("/proc/sys/kernel/random/boot_id", "r");
-	if(!boot_id)
+	if (!boot_id)
 		return -1;
-	if((fseek(boot_id, 24, SEEK_SET) < 0) ||
-	   (fscanf(boot_id, "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
-		   &buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5]) != 6))
+	if ((fseek(boot_id, 24, SEEK_SET) < 0) ||
+		(fscanf(boot_id, "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx", &buf[0],
+				&buf[1], &buf[2], &buf[3], &buf[4], &buf[5]) != 6))
 	{
 		fclose(boot_id);
 		return -1;
@@ -101,7 +101,7 @@ read_random_bytes(unsigned char *buf, size_t size)
 	pid_t pid;
 
 	i = open("/dev/urandom", O_RDONLY);
-	if(i >= 0)
+	if (i >= 0)
 	{
 		if (read(i, buf, size) == -1)
 			DPRINTF(E_MAXDEBUG, L_GENERAL, "Failed to read random bytes\n");
@@ -112,11 +112,11 @@ read_random_bytes(unsigned char *buf, size_t size)
 	 * but lowest bits in some libc are not so "random".  */
 	srand(monotonic_us());
 	pid = getpid();
-	while(1)
+	while (1)
 	{
-		for(i = 0; i < size; i++)
+		for (i = 0; i < size; i++)
 			buf[i] ^= rand() >> 5;
-		if(pid == 0)
+		if (pid == 0)
 			break;
 		srand(pid);
 		pid = 0;
@@ -139,7 +139,7 @@ generate_uuid(unsigned char uuid_out[16])
 {
 	static uint64_t last_time_all;
 	static unsigned int clock_seq_started;
-	static char last_node[6] = { 0, 0, 0, 0, 0, 0 };
+	static char last_node[6] = {0, 0, 0, 0, 0, 0};
 
 	struct timespec ts;
 	uint64_t time_all;
@@ -153,7 +153,7 @@ generate_uuid(unsigned char uuid_out[16])
 
 	mac_error = getsyshwaddr((char *)mac, sizeof(mac));
 
-	if(!mac_error)
+	if (!mac_error)
 	{
 		memcpy(&uuid_out[10], mac, ETH_ALEN);
 	}
@@ -161,17 +161,17 @@ generate_uuid(unsigned char uuid_out[16])
 	{
 		/* use bootid's nodeID if no network interface found */
 		DPRINTF(E_INFO, L_HTTP, "Could not find MAC.  Use bootid's nodeID.\n");
-		if( read_bootid_node(&uuid_out[10], 6) != 0)
+		if (read_bootid_node(&uuid_out[10], 6) != 0)
 		{
 			DPRINTF(E_INFO, L_HTTP, "bootid node not successfully read.\n");
 			read_random_bytes(&uuid_out[10], 6);
 		}
 	}
 
-	if(memcmp(last_node, uuid_out+10, 6) != 0)
+	if (memcmp(last_node, uuid_out + 10, 6) != 0)
 	{
 		inc_clock_seq = 1;
-		memcpy(last_node, uuid_out+10, 6);
+		memcpy(last_node, uuid_out + 10, 6);
 	}
 
 	/* Determine 60-bit timestamp value. For UUID version 1, this is
@@ -196,17 +196,17 @@ generate_uuid(unsigned char uuid_out[16])
 	time_all &= 0x0fffffffffffffffULL; /* limit to 60 bits */
 
 	/* Determine clock sequence (max. 14 bit) */
-	if(!clock_seq_initialized)
+	if (!clock_seq_initialized)
 	{
 		init_clockseq();
 		clock_seq_started = clock_seq;
 	}
 	else
 	{
-		if(inc_clock_seq || time_all <= last_time_all)
+		if (inc_clock_seq || time_all <= last_time_all)
 		{
 			clock_seq = (clock_seq + 1) & clock_seq_max;
-			if(clock_seq == clock_seq_started)
+			if (clock_seq == clock_seq_started)
 			{
 				clock_seq = (clock_seq - 1) & clock_seq_max;
 			}
@@ -237,19 +237,22 @@ generate_uuid(unsigned char uuid_out[16])
 	return 0;
 }
 
-/* Places a null-terminated 37-byte time-based UUID string in the buffer pointer to by buf.
- * A large enough buffer must already be allocated. */
+/* Places a null-terminated 37-byte time-based UUID string in the buffer pointer
+ * to by buf. A large enough buffer must already be allocated. */
 int
 get_uuid_string(char *buf)
 {
 	unsigned char uuid[16];
 
-	if( generate_uuid(uuid) != 0 )
+	if (generate_uuid(uuid) != 0)
 		return -1;
 
-	sprintf(buf, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-	        uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8], 
-	        uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+	sprintf(
+		buf,
+		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
+		uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14],
+		uuid[15]);
 	buf[36] = '\0';
 
 	return 0;

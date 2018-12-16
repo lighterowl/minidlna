@@ -55,7 +55,7 @@ add_process_info(pid_t pid, struct client_cache_s *client)
 
 	for (i = 0; i < runtime_vars.max_connections; i++)
 	{
-		child = children+i;
+		child = children + i;
 		if (child->pid)
 			continue;
 		child->pid = pid;
@@ -73,7 +73,7 @@ remove_process_info(pid_t pid)
 
 	for (i = 0; i < runtime_vars.max_connections; i++)
 	{
-		child = children+i;
+		child = children + i;
 		if (child->pid != pid)
 			continue;
 		child->pid = 0;
@@ -88,8 +88,9 @@ process_fork(struct client_cache_s *client)
 {
 	if (number_of_children >= runtime_vars.max_connections)
 	{
-		DPRINTF(E_WARN, L_GENERAL, "Exceeded max connections [%d], not forking\n",
-			runtime_vars.max_connections);
+		DPRINTF(E_WARN, L_GENERAL,
+				"Exceeded max connections [%d], not forking\n",
+				runtime_vars.max_connections);
 		errno = EAGAIN;
 		return -1;
 	}
@@ -101,7 +102,8 @@ process_fork(struct client_cache_s *client)
 			client->connections++;
 		add_process_info(pid, client);
 		number_of_children++;
-	} else if (pid == 0)
+	}
+	else if (pid == 0)
 		event_module.fini();
 	else
 		DPRINTF(E_FATAL, L_GENERAL, "Fork() failed: %s\n", strerror(errno));
@@ -135,39 +137,40 @@ process_daemonize(void)
 #ifndef USE_DAEMON
 	int i;
 
-	switch(fork())
+	switch (fork())
 	{
-		/* fork error */
-		case -1:
-			perror("fork()");
-			exit(1);
+	/* fork error */
+	case -1:
+		perror("fork()");
+		exit(1);
 
-		/* child process */
-		case 0:
+	/* child process */
+	case 0:
 		/* obtain a new process group */
-			if( (pid = setsid()) < 0)
-			{
-				perror("setsid()");
-				exit(1);
-			}
+		if ((pid = setsid()) < 0)
+		{
+			perror("setsid()");
+			exit(1);
+		}
 
-			/* close all descriptors */
-			for (i=getdtablesize();i>=0;--i) close(i);		
+		/* close all descriptors */
+		for (i = getdtablesize(); i >= 0; --i)
+			close(i);
 
-			i = open("/dev/null",O_RDWR); /* open stdin */
-			dup(i); /* stdout */
-			dup(i); /* stderr */
+		i = open("/dev/null", O_RDWR); /* open stdin */
+		dup(i);						   /* stdout */
+		dup(i);						   /* stderr */
 
-			umask(027);
-			chdir("/");
+		umask(027);
+		chdir("/");
 
-			break;
-		/* parent process */
-		default:
-			exit(0);
+		break;
+	/* parent process */
+	default:
+		exit(0);
 	}
 #else
-	if( daemon(0, 0) < 0 )
+	if (daemon(0, 0) < 0)
 		perror("daemon()");
 	pid = getpid();
 #endif
@@ -181,19 +184,19 @@ process_check_if_running(const char *fname)
 	int pidfile;
 	pid_t pid;
 
-	if(!fname || *fname == '\0')
+	if (!fname || *fname == '\0')
 		return -1;
 
-	if( (pidfile = open(fname, O_RDONLY)) < 0)
+	if ((pidfile = open(fname, O_RDONLY)) < 0)
 		return 0;
 
 	memset(buffer, 0, 64);
 
-	if(read(pidfile, buffer, 63) > 0)
+	if (read(pidfile, buffer, 63) > 0)
 	{
-		if( (pid = atol(buffer)) > 0)
+		if ((pid = atol(buffer)) > 0)
 		{
-			if(!kill(pid, 0))
+			if (!kill(pid, 0))
 			{
 				close(pidfile);
 				return -2;
@@ -214,7 +217,7 @@ process_reap_children(void)
 
 	for (i = 0; i < runtime_vars.max_connections; i++)
 	{
-		child = children+i;
+		child = children + i;
 		if (child->pid)
 			kill(child->pid, SIGKILL);
 	}

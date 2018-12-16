@@ -53,11 +53,11 @@ static int nevents;
 static int max_fd;
 
 struct event_module event_module = {
-	.add =		select_add,
-	.del =		select_del,
-	.process =	select_process,
-	.init = 	select_init,
-	.fini =		select_fini,
+	.add = select_add,
+	.del = select_del,
+	.process = select_process,
+	.init = select_init,
+	.fini = select_fini,
 };
 
 static int
@@ -76,7 +76,6 @@ select_init(void)
 	return (0);
 }
 
-
 static void
 select_fini(void)
 {
@@ -91,7 +90,8 @@ select_add(struct event *ev)
 
 	assert(ev->fd < FD_SETSIZE);
 
-	switch (ev->rdwr) {
+	switch (ev->rdwr)
+	{
 	case EVENT_READ:
 		FD_SET(ev->fd, &master_read_fd_set);
 		break;
@@ -117,7 +117,8 @@ select_del(struct event *ev, int flags)
 
 	assert(ev->fd < FD_SETSIZE);
 
-	switch (ev->rdwr) {
+	switch (ev->rdwr)
+	{
 	case EVENT_READ:
 		FD_CLR(ev->fd, &master_read_fd_set);
 		break;
@@ -129,7 +130,8 @@ select_del(struct event *ev, int flags)
 	if (max_fd == ev->fd)
 		max_fd = -1;
 
-	if (ev->index < --nevents) {
+	if (ev->index < --nevents)
+	{
 		struct event *ev0;
 
 		ev0 = events[nevents];
@@ -150,13 +152,14 @@ select_process(u_long msec)
 
 	/* Need to rescan for max_fd. */
 	if (max_fd == -1)
-		for (i = 0; i < nevents; i++) {
+		for (i = 0; i < nevents; i++)
+		{
 			if (max_fd < events[i]->fd)
 				max_fd = events[i]->fd;
 		}
 
-	tv.tv_sec = (long) (msec / 1000);
-	tv.tv_usec = (long) ((msec % 1000) * 1000);
+	tv.tv_sec = (long)(msec / 1000);
+	tv.tv_usec = (long)((msec % 1000) * 1000);
 	tp = &tv;
 
 	work_read_fd_set = master_read_fd_set;
@@ -164,7 +167,8 @@ select_process(u_long msec)
 
 	ready = select(max_fd + 1, &work_read_fd_set, &work_write_fd_set, NULL, tp);
 
-	if (ready == -1) {
+	if (ready == -1)
+	{
 		if (errno == EINTR)
 			return (errno);
 		DPRINTF(E_FATAL, L_GENERAL, "select(): %s. EXITING\n", strerror(errno));
@@ -173,10 +177,12 @@ select_process(u_long msec)
 	if (ready == 0)
 		return (0);
 
-	for (i = 0; i < nevents; i++) {
+	for (i = 0; i < nevents; i++)
+	{
 		ev = events[i];
 
-		switch (ev->rdwr) {
+		switch (ev->rdwr)
+		{
 		case EVENT_READ:
 			if (FD_ISSET(ev->fd, &work_read_fd_set))
 				ev->process(ev);

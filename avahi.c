@@ -39,10 +39,11 @@
 #include "upnpglobalvars.h"
 #include "log.h"
 
-static struct context {
+static struct context
+{
 	AvahiThreadedPoll *threaded_poll;
-	AvahiClient       *client;
-	AvahiEntryGroup   *group;
+	AvahiClient *client;
+	AvahiEntryGroup *group;
 } ctx;
 
 /*****************************************************************
@@ -50,20 +51,23 @@ static struct context {
  *****************************************************************/
 
 /* Called when publishing of service data completes */
-static void publish_reply(AvahiEntryGroup *g,
-			  AvahiEntryGroupState state,
+static void
+publish_reply(AvahiEntryGroup *g, AvahiEntryGroupState state,
 			  AVAHI_GCC_UNUSED void *userdata)
 {
 	assert(ctx.group == NULL || g == ctx.group);
 
-	switch (state) {
+	switch (state)
+	{
 	case AVAHI_ENTRY_GROUP_ESTABLISHED:
 		/* The entry group has been established successfully */
-		DPRINTF(E_MAXDEBUG, L_SSDP, "publish_reply: AVAHI_ENTRY_GROUP_ESTABLISHED\n");
+		DPRINTF(E_MAXDEBUG, L_SSDP,
+				"publish_reply: AVAHI_ENTRY_GROUP_ESTABLISHED\n");
 		break;
 	case AVAHI_ENTRY_GROUP_COLLISION:
 		/* With multiple names there's no way to know which one collided */
-		DPRINTF(E_ERROR, L_SSDP, "publish_reply: AVAHI_ENTRY_GROUP_COLLISION: %s\n",
+		DPRINTF(E_ERROR, L_SSDP,
+				"publish_reply: AVAHI_ENTRY_GROUP_COLLISION: %s\n",
 				avahi_strerror(avahi_client_errno(ctx.client)));
 		avahi_threaded_poll_quit(ctx.threaded_poll);
 		break;
@@ -82,21 +86,21 @@ static void publish_reply(AvahiEntryGroup *g,
 static int
 _add_svc(const char *cat, const char *srv, const char *id, const char *platform)
 {
-	char name[128+1];
+	char name[128 + 1];
 	char path[64];
 	int ret;
 
 	snprintf(name, sizeof(name), "%s on %s", cat, friendly_name);
 	snprintf(path, sizeof(path),
-		 "path=/TiVoConnect?Command=QueryContainer&Container=%s", id);
+			 "path=/TiVoConnect?Command=QueryContainer&Container=%s", id);
 
 	DPRINTF(E_INFO, L_SSDP, "Registering '%s'\n", name);
-	ret = avahi_entry_group_add_service(ctx.group, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET,
-					    0, name, srv, NULL, NULL, runtime_vars.port,
-					    "protocol=http", path, platform, NULL);
+	ret = avahi_entry_group_add_service(
+		ctx.group, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, 0, name, srv, NULL, NULL,
+		runtime_vars.port, "protocol=http", path, platform, NULL);
 	if (ret < 0)
-		DPRINTF(E_ERROR, L_SSDP, "Failed to add %s: %s\n",
-			srv, avahi_strerror(avahi_client_errno(ctx.client)));
+		DPRINTF(E_ERROR, L_SSDP, "Failed to add %s: %s\n", srv,
+				avahi_strerror(avahi_client_errno(ctx.client)));
 
 	return ret;
 }
@@ -113,7 +117,7 @@ register_stuff(void)
 		if (!ctx.group)
 		{
 			DPRINTF(E_ERROR, L_SSDP, "Failed to create entry group: %s\n",
-				avahi_strerror(avahi_client_errno(ctx.client)));
+					avahi_strerror(avahi_client_errno(ctx.client)));
 			return;
 		}
 	}
@@ -124,27 +128,28 @@ register_stuff(void)
 			return;
 		if (_add_svc("Photos", "_tivo-photos._tcp", "3", NULL) < 0)
 			return;
-		if (_add_svc("Videos", "_tivo-videostream._tcp", "2", "platform=pc/"SERVER_NAME) < 0)
+		if (_add_svc("Videos", "_tivo-videostream._tcp", "2",
+					 "platform=pc/" SERVER_NAME) < 0)
 			return;
 		if (avahi_entry_group_commit(ctx.group) < 0)
 		{
 			DPRINTF(E_ERROR, L_SSDP, "Failed to commit entry group: %s\n",
-				avahi_strerror(avahi_client_errno(ctx.client)));
+					avahi_strerror(avahi_client_errno(ctx.client)));
 			return;
 		}
 	}
 }
 
-static void client_callback(AvahiClient *client,
-			    AvahiClientState state,
-			    void *userdata)
+static void
+client_callback(AvahiClient *client, AvahiClientState state, void *userdata)
 {
 	ctx.client = client;
 
-	switch (state) {
+	switch (state)
+	{
 	case AVAHI_CLIENT_S_RUNNING:
 		/* The server has started up successfully and registered its host
-		* name on the network, so it's time to create our services */
+		 * name on the network, so it's time to create our services */
 		register_stuff();
 		break;
 	case AVAHI_CLIENT_S_COLLISION:
@@ -163,21 +168,19 @@ static void client_callback(AvahiClient *client,
 
 			/* Reconnect to the server */
 			ctx.client = avahi_client_new(
-					avahi_threaded_poll_get(ctx.threaded_poll),
-					AVAHI_CLIENT_NO_FAIL, client_callback,
-					&ctx, &error);
+				avahi_threaded_poll_get(ctx.threaded_poll),
+				AVAHI_CLIENT_NO_FAIL, client_callback, &ctx, &error);
 			if (!ctx.client)
 			{
-				DPRINTF(E_ERROR, L_SSDP,
-					"Failed to contact server: %s\n",
-					avahi_strerror(error));
+				DPRINTF(E_ERROR, L_SSDP, "Failed to contact server: %s\n",
+						avahi_strerror(error));
 				avahi_threaded_poll_quit(ctx.threaded_poll);
 			}
 		}
 		else
 		{
 			DPRINTF(E_ERROR, L_SSDP, "Client failure: %s\n",
-				avahi_strerror(avahi_client_errno(client)));
+					avahi_strerror(avahi_client_errno(client)));
 			avahi_threaded_poll_quit(ctx.threaded_poll);
 		}
 		break;
@@ -195,7 +198,8 @@ static void client_callback(AvahiClient *client,
  * Tries to shutdown this loop impl.
  * Call this function from inside this thread.
  */
-void tivo_bonjour_unregister(void)
+void
+tivo_bonjour_unregister(void)
 {
 	DPRINTF(E_DEBUG, L_SSDP, "tivo_bonjour_unregister\n");
 
@@ -216,7 +220,8 @@ void tivo_bonjour_unregister(void)
  * Tries to setup the Zeroconf thread and any
  * neccessary config setting.
  */
-void tivo_bonjour_register(void)
+void
+tivo_bonjour_register(void)
 {
 	int error;
 
@@ -226,12 +231,13 @@ void tivo_bonjour_register(void)
 		return;
 
 	/* now we need to acquire a client */
-	ctx.client = avahi_client_new(avahi_threaded_poll_get(ctx.threaded_poll),
-			AVAHI_CLIENT_NO_FAIL, client_callback, NULL, &error);
+	ctx.client =
+		avahi_client_new(avahi_threaded_poll_get(ctx.threaded_poll),
+						 AVAHI_CLIENT_NO_FAIL, client_callback, NULL, &error);
 	if (!ctx.client)
 	{
 		DPRINTF(E_ERROR, L_SSDP, "Failed to create client object: %s\n",
-					avahi_strerror(error));
+				avahi_strerror(error));
 		tivo_bonjour_unregister();
 		return;
 	}
@@ -239,7 +245,7 @@ void tivo_bonjour_register(void)
 	if (avahi_threaded_poll_start(ctx.threaded_poll) < 0)
 	{
 		DPRINTF(E_ERROR, L_SSDP, "Failed to create thread: %s\n",
-					avahi_strerror(avahi_client_errno(ctx.client)));
+				avahi_strerror(avahi_client_errno(ctx.client)));
 		tivo_bonjour_unregister();
 	}
 	else

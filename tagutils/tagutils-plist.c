@@ -27,18 +27,20 @@
 #include "tagutils.h"
 #include "log.h"
 
-
 #define MAX_BUF 4096
 
 static FILE *fp = 0;
 static int _utf8bom = 0;
 static int _trackno;
 
-static int (*_next_track)(struct song_metadata*, struct stat*, char*, char*);
-static int _m3u_pls_next_track(struct song_metadata*, struct stat*, char*, char*);
+static int (*_next_track)(struct song_metadata *, struct stat *, char *,
+						  char *);
+static int
+_m3u_pls_next_track(struct song_metadata *, struct stat *, char *, char *);
 
 int
-start_plist(const char *path, struct song_metadata *psong, struct stat *stat, char *lang, char *type)
+start_plist(const char *path, struct song_metadata *psong, struct stat *stat,
+			char *lang, char *type)
 {
 	char *fname, *suffix;
 
@@ -46,27 +48,28 @@ start_plist(const char *path, struct song_metadata *psong, struct stat *stat, ch
 	_utf8bom = 0;
 	_trackno = 0;
 
-	if(strcasecmp(type, "m3u") == 0)
+	if (strcasecmp(type, "m3u") == 0)
 		_next_track = _m3u_pls_next_track;
-	else if(strcasecmp(type, "pls") == 0)
+	else if (strcasecmp(type, "pls") == 0)
 		_next_track = _m3u_pls_next_track;
 
-	if(!_next_track)
+	if (!_next_track)
 	{
-		DPRINTF(E_ERROR, L_SCANNER, "Unsupported playlist type <%s> (%s)\n", type, path);
+		DPRINTF(E_ERROR, L_SCANNER, "Unsupported playlist type <%s> (%s)\n",
+				type, path);
 		return -1;
 	}
 
-	if(!(fp = fopen(path, "rb")))
+	if (!(fp = fopen(path, "rb")))
 	{
 		DPRINTF(E_ERROR, L_SCANNER, "Cannot open %s\n", path);
 		return -1;
 	}
 
-	if(!psong)
+	if (!psong)
 		return 0;
 
-	memset((void*)psong, 0, sizeof(struct song_metadata));
+	memset((void *)psong, 0, sizeof(struct song_metadata));
 	psong->is_plist = 1;
 	psong->path = strdup(path);
 	psong->type = type;
@@ -76,11 +79,12 @@ start_plist(const char *path, struct song_metadata *psong, struct stat *stat, ch
 
 	psong->title = strdup(psong->basename);
 	suffix = strrchr(psong->title, '.');
-	if(suffix) *suffix = '\0';
+	if (suffix)
+		*suffix = '\0';
 
-	if(stat)
+	if (stat)
 	{
-		if(!psong->time_modified)
+		if (!psong->time_modified)
 			psong->time_modified = stat->st_mtime;
 		psong->file_size = stat->st_size;
 	}
@@ -89,73 +93,76 @@ start_plist(const char *path, struct song_metadata *psong, struct stat *stat, ch
 }
 
 int
-_m3u_pls_next_track(struct song_metadata *psong, struct stat *stat, char *lang, char *type)
+_m3u_pls_next_track(struct song_metadata *psong, struct stat *stat, char *lang,
+					char *type)
 {
 	char buf[MAX_BUF], *p;
 	int len;
 
-	memset((void*)psong, 0, sizeof(struct song_metadata));
+	memset((void *)psong, 0, sizeof(struct song_metadata));
 
 	// read first line
 	p = fgets(buf, MAX_BUF, fp);
-	if(!p)
+	if (!p)
 	{
 		fclose(fp);
 		return 1;
 	}
 
-	if(strcasecmp(type, "m3u") == 0)
+	if (strcasecmp(type, "m3u") == 0)
 	{
 		// check BOM
-		if(!_utf8bom && p[0] == '\xef' && p[1] == '\xbb' && p[2] == '\xbf')
+		if (!_utf8bom && p[0] == '\xef' && p[1] == '\xbb' && p[2] == '\xbf')
 		{
 			_utf8bom = 1;
 			p += 3;
 		}
 	}
 
-	while(p)
+	while (p)
 	{
-		while(isspace(*p)) p++;
+		while (isspace(*p))
+			p++;
 
-		if(!(*p) || *p == '#')
+		if (!(*p) || *p == '#')
 			goto next_line;
 
-		if(!isprint(*p))
+		if (!isprint(*p))
 		{
-			DPRINTF(E_ERROR, L_SCANNER, "Playlist looks bad (unprintable characters)\n");
+			DPRINTF(E_ERROR, L_SCANNER,
+					"Playlist looks bad (unprintable characters)\n");
 			fclose(fp);
 			return 2;
 		}
 
-		if(strcasecmp(type, "pls") == 0)
+		if (strcasecmp(type, "pls") == 0)
 		{
 			// verify that it's a valid pls playlist
-			if(!_trackno)
+			if (!_trackno)
 			{
-				if(strncmp(p, "[playlist]", 10))
+				if (strncmp(p, "[playlist]", 10))
 					break;
 				_trackno++;
 				goto next_line;
 			}
 
-			if(strncmp(p, "File", 4) != 0)
+			if (strncmp(p, "File", 4) != 0)
 				goto next_line;
 
-			psong->track = strtol(p+4, &p, 10);
-			if(!psong->track || !p++)
+			psong->track = strtol(p + 4, &p, 10);
+			if (!psong->track || !p++)
 				goto next_line;
 			_trackno = psong->track;
 		}
-		else if(strcasecmp(type, "m3u") == 0)
+		else if (strcasecmp(type, "m3u") == 0)
 			psong->track = ++_trackno;
 
 		len = strlen(p);
-		while(p[len-1] == '\r' || p[len-1] == '\n')
+		while (p[len - 1] == '\r' || p[len - 1] == '\n')
 			p[--len] = '\0';
 		psong->path = strdup(p);
 		return 0;
-next_line:
+	next_line:
 		p = fgets(buf, MAX_BUF, fp);
 	}
 
@@ -164,9 +171,10 @@ next_line:
 }
 
 int
-next_plist_track(struct song_metadata *psong, struct stat *stat, char *lang, char *type)
+next_plist_track(struct song_metadata *psong, struct stat *stat, char *lang,
+				 char *type)
 {
-	if(_next_track)
+	if (_next_track)
 		return _next_track(psong, stat, lang, type);
 	return -1;
 }

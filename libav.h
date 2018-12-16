@@ -57,7 +57,7 @@
 #include <avformat.h>
 #endif
 
-#define USE_CODECPAR LIBAVFORMAT_VERSION_INT >= ((57<<16)+(50<<8)+100)
+#define USE_CODECPAR LIBAVFORMAT_VERSION_INT >= ((57 << 16) + (50 << 8) + 100)
 
 #ifndef FF_PROFILE_H264_BASELINE
 #define FF_PROFILE_H264_BASELINE 66
@@ -80,7 +80,7 @@
 #define AVMEDIA_TYPE_VIDEO CODEC_TYPE_VIDEO
 #endif
 
-#if LIBAVCODEC_VERSION_INT <= ((51<<16)+(50<<8)+1)
+#if LIBAVCODEC_VERSION_INT <= ((51 << 16) + (50 << 8) + 1)
 #define CODEC_ID_WMAPRO CODEC_ID_NONE
 #endif
 
@@ -105,23 +105,24 @@
 #define AV_CODEC_ID_WMV3 CODEC_ID_WMV3
 #endif
 
-#if LIBAVUTIL_VERSION_INT < ((50<<16)+(13<<8)+0)
+#if LIBAVUTIL_VERSION_INT < ((50 << 16) + (13 << 8) + 0)
 #define av_strerror(x, y, z) snprintf(y, z, "%d", x)
 #endif
 
-#if LIBAVFORMAT_VERSION_INT >= ((52<<16)+(31<<8)+0)
-# if LIBAVUTIL_VERSION_INT < ((51<<16)+(5<<8)+0) && !defined(FF_API_OLD_METADATA2)
+#if LIBAVFORMAT_VERSION_INT >= ((52 << 16) + (31 << 8) + 0)
+#if LIBAVUTIL_VERSION_INT < ((51 << 16) + (5 << 8) + 0) &&                     \
+	!defined(FF_API_OLD_METADATA2)
 #define AV_DICT_IGNORE_SUFFIX AV_METADATA_IGNORE_SUFFIX
 #define av_dict_get av_metadata_get
 typedef AVMetadataTag AVDictionaryEntry;
-# endif
+#endif
 #endif
 
 static inline int
 lav_open(AVFormatContext **ctx, const char *filename)
 {
 	int ret;
-#if LIBAVFORMAT_VERSION_INT >= ((53<<16)+(17<<8)+0)
+#if LIBAVFORMAT_VERSION_INT >= ((53 << 16) + (17 << 8) + 0)
 	ret = avformat_open_input(ctx, filename, NULL, NULL);
 	if (ret == 0)
 		avformat_find_stream_info(*ctx, NULL);
@@ -136,7 +137,7 @@ lav_open(AVFormatContext **ctx, const char *filename)
 static inline void
 lav_close(AVFormatContext *ctx)
 {
-#if LIBAVFORMAT_VERSION_INT >= ((53<<16)+(17<<8)+0)
+#if LIBAVFORMAT_VERSION_INT >= ((53 << 16) + (17 << 8) + 0)
 	avformat_close_input(&ctx);
 #else
 	av_close_input_file(ctx);
@@ -162,9 +163,13 @@ lav_get_interlaced(AVStream *s)
 #if LIBAVCODEC_VERSION_MAJOR >= 57
 	return (s->time_base.den ? (s->avg_frame_rate.num / s->time_base.den) : 0);
 #elif LIBAVCODEC_VERSION_MAJOR >= 54
-	return (s->codec->time_base.den ? (s->avg_frame_rate.num / s->codec->time_base.den) : 0);
+	return (s->codec->time_base.den
+				? (s->avg_frame_rate.num / s->codec->time_base.den)
+				: 0);
 #else
-	return (s->codec->time_base.den ? (s->r_frame_rate.num / s->codec->time_base.den) : 0);
+	return (s->codec->time_base.den
+				? (s->r_frame_rate.num / s->codec->time_base.den)
+				: 0);
 #endif
 }
 
@@ -211,9 +216,9 @@ lav_codec_extradata(AVStream *s)
 static inline int
 lav_is_thumbnail_stream(AVStream *s, uint8_t **data, int *size)
 {
-#if LIBAVFORMAT_VERSION_INT >= ((54<<16)+(6<<8))
+#if LIBAVFORMAT_VERSION_INT >= ((54 << 16) + (6 << 8))
 	if (s->disposition & AV_DISPOSITION_ATTACHED_PIC &&
-	    lav_codec_id(s) == AV_CODEC_ID_MJPEG)
+		lav_codec_id(s) == AV_CODEC_ID_MJPEG)
 	{
 		if (data)
 			*data = s->attached_pic.data;
