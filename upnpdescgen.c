@@ -456,6 +456,7 @@ genXML(char *str, int *len, int *tmplen, const struct XMLElt *p)
 			pile[top].eltname = eltname;
 		}
 	}
+	return str;
 }
 
 /* genRootDesc() :
