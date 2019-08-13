@@ -12,6 +12,7 @@ version.
 You are of course by all means welcome to use these sources : if you do,
 I'll appreciate the feedback. Thanks in advance!
 
+```
 MiniDLNA project
 (c) 2009 Justin Maggard
 Portions (c) 2006-2007 Thomas Bernard
@@ -45,3 +46,4 @@ Prerequisites
 
 
 Justin Maggard
+```
