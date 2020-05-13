@@ -528,12 +528,12 @@ GetAudioMetadata(const char *path, const char *name)
 }
 
 /* For libjpeg error handling */
-jmp_buf setjmp_buffer;
+jmp_buf metadata_setjmp_buffer;
 static void
 libjpeg_error_handler(j_common_ptr cinfo)
 {
 	cinfo->err->output_message(cinfo);
-	longjmp(setjmp_buffer, 1);
+	longjmp(metadata_setjmp_buffer, 1);
 	return;
 }
 
@@ -666,7 +666,7 @@ no_exifdata:
 			cinfo.err = jpeg_std_error(&jerr);
 			jerr.error_exit = libjpeg_error_handler;
 			jpeg_create_decompress(&cinfo);
-			if (setjmp(setjmp_buffer))
+			if (setjmp(metadata_setjmp_buffer))
 				goto error;
 			jpeg_stdio_src(&cinfo, infile);
 			jpeg_read_header(&cinfo, TRUE);
