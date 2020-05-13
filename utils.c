@@ -275,7 +275,7 @@ make_dir(char *path, mode_t mode)
 				{
 					++s;
 				} while (*s == '/');
-				c = *s;	/* Save the current char */
+				c = *s;	   /* Save the current char */
 				*s = '\0'; /* and replace it with nul. */
 				break;
 			}

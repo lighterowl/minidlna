@@ -1080,12 +1080,12 @@ callback(void *args, int argc, char **argv, char **azColName)
 			if (sec > 0)
 			{
 				/* This format is wrong according to the UPnP/AV spec.  It
-				*should be in duration format,
-				** so HH:MM:SS. But Kodi seems to be the only user of this tag,
-				*and it only works with a
-				** raw seconds value.
-				** If Kodi gets fixed, we can use duration_str(sec * 1000) here
-			   */
+				 *should be in duration format,
+				 ** so HH:MM:SS. But Kodi seems to be the only user of this tag,
+				 *and it only works with a
+				 ** raw seconds value.
+				 ** If Kodi gets fixed, we can use duration_str(sec * 1000) here
+				 */
 				if (passed_args->filter & FILTER_UPNP_LASTPLAYBACKPOSITION)
 					ret = strcatf(str,
 								  "&lt;upnp:lastPlaybackPosition&gt;%d&lt;/"

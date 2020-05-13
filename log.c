@@ -33,8 +33,8 @@ static const int _default_log_level = E_WARN;
 int log_level[L_MAX];
 
 const char *facility_name[] = {"general", "artwork",  "database", "inotify",
-							   "scanner", "metadata", "http",	 "ssdp",
-							   "tivo",	0};
+							   "scanner", "metadata", "http",	  "ssdp",
+							   "tivo",	  0};
 
 const char *level_name[] = {"off",		// E_OFF
 							"fatal",	// E_FATAL

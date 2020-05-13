@@ -45,7 +45,7 @@ static const char *const upnptypes[] = {
 static const char *const upnpdefaultvalues[] = {0, "Unconfigured"};
 
 static const char *const upnpallowedvalues[] = {
-	0,	 /* 0 */
+	0,	   /* 0 */
 	"DSL", /* 1 */
 	"POTS",
 	"Cable",
@@ -112,7 +112,7 @@ static const struct XMLElt rootDesc[] = {
 	{"/deviceType", "urn:schemas-upnp-org:device:MediaServer:1"},
 	{"/friendlyName", friendly_name},				 /* required */
 	{"/manufacturer", ROOTDEV_MANUFACTURER},		 /* required */
-	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},   /* optional */
+	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	 /* optional */
 	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
 	{"/modelName", modelname},						 /* required */
 	{"/modelNumber", modelnumber},
@@ -188,12 +188,12 @@ static const struct argument GetCurrentConnectionInfoArgs[] = {
 
 static const struct action ConnectionManagerActions[] = {
 	{"GetProtocolInfo", GetProtocolInfoArgs},					/* R */
-	{"GetCurrentConnectionIDs", GetCurrentConnectionIDsArgs},   /* R */
+	{"GetCurrentConnectionIDs", GetCurrentConnectionIDsArgs},	/* R */
 	{"GetCurrentConnectionInfo", GetCurrentConnectionInfoArgs}, /* R */
 	{0, 0}};
 
 static const struct stateVar ConnectionManagerVars[] = {
-	{"SourceProtocolInfo", 0 | EVENTED, 0, 0, 44},   /* required */
+	{"SourceProtocolInfo", 0 | EVENTED, 0, 0, 44},	 /* required */
 	{"SinkProtocolInfo", 0 | EVENTED, 0, 0, 48},	 /* required */
 	{"CurrentConnectionIDs", 0 | EVENTED, 0, 0, 46}, /* required */
 	{"A_ARG_TYPE_ConnectionStatus", 0, 0, 27},		 /* required */
@@ -244,7 +244,7 @@ static const struct argument SearchArgs[] = {{"ContainerID", 1, 1},
 
 static const struct action ContentDirectoryActions[] = {
 	{"GetSearchCapabilities", GetSearchCapabilitiesArgs}, /* R */
-	{"GetSortCapabilities", GetSortCapabilitiesArgs},	 /* R */
+	{"GetSortCapabilities", GetSortCapabilitiesArgs},	  /* R */
 	{"GetSystemUpdateID", GetSystemUpdateIDArgs},		  /* R */
 	{"Browse", BrowseArgs},								  /* R */
 	{"Search", SearchArgs},								  /* O */

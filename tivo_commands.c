@@ -787,7 +787,7 @@ ProcessTiVoCommand(struct upnphttp *h, const char *orig_path)
 		{
 			sformat = val;
 		}
-		else if (strcasecmp(key, "Format") == 0 ||	// Only send XML
+		else if (strcasecmp(key, "Format") == 0 ||	  // Only send XML
 				 strcasecmp(key, "SerialNum") == 0 || // Unused for now
 				 strcasecmp(key, "DoGenres") ==
 					 0) // Not sure what this is, so ignore it
