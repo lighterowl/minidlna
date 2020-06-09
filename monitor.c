@@ -703,7 +703,9 @@ start_inotify(void)
 		DPRINTF(E_WARN, L_INOTIFY,
 				"Failed to reduce inotify thread priority\n");
 	sqlite3_release_memory(1 << 31);
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	av_register_all();
+#endif
 
 	while (!quitting)
 	{

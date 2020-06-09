@@ -988,7 +988,9 @@ start_scanner(void)
 				"Failed to reduce scanner thread priority\n");
 
 	setlocale(LC_COLLATE, "");
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 	av_register_all();
+#endif
 	av_log_set_level(AV_LOG_PANIC);
 
 	if (GETFLAG(RESCAN_MASK))
