@@ -1,4 +1,7 @@
-# This is an unofficial fork
+# This is an unofficial, abandoned fork
+
+**This project is now abandoned : I have since moved to using MPD which suits my usecase much better. The repository will remain readonly for those who find my modifications worthwhile.**
+
 This is my own fork which is not supported in any way by the original
 authors. It contains modifications that I use in my own installation of
 minidlna, which _may_ be exclusive to my own setup and thus might not
